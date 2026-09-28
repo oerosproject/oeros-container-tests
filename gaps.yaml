@@ -1,0 +1,12 @@
+# Known gaps: oeros results that fail today and are tracked by a meta-oeros issue.
+# Each entry turns the matching test into a strict xfail. When the fix lands the test XPASSes,
+# strict mode turns that into a failure, and the entry (and the spec status) must be updated.
+#
+# Fields: spec, criterion, tier, issue (URL), reason. `tier: all` matches every tier.
+# Only the oeros family can have a known gap; an OSRF failure means a broken test.
+gaps: []
+#  - spec: PS-001
+#    criterion: AC3
+#    tier: ros-core
+#    issue: https://github.com/oerosproject/meta-oeros/issues/0
+#    reason: setup.bash needs bash, which the busybox base does not ship

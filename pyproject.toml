@@ -1,0 +1,53 @@
+[project]
+name = "oeros-container-tests"
+version = "0.1.0"
+description = "Spec-driven parity tests: meta-oeros ROS 2 container images vs OSRF reference images"
+requires-python = ">=3.11"
+# Lower bounds only for now; add a lock file (uv lock) once the suite is stable.
+# testcontainers, syrupy and pytest-rerunfailures join when the specs that need them land.
+dependencies = [
+    "pytest>=8",
+    "pytest-timeout>=2.3",
+    "allure-pytest>=2.13",
+    "PyYAML>=6",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.6"]
+# Compose provider when the runtime is podman (Docker ships `docker compose`).
+podman = ["podman-compose>=1.2"]
+
+[tool.setuptools]
+packages = []
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = ["fixtures"]  # scripts that run inside the images, not tests
+pythonpath = ["."]
+addopts = "-ra -p tests.plugins.spec_trace -p tests.plugins.options"
+xfail_strict = true
+timeout = 900
+markers = [
+    "spec(spec_id, *criteria): trace the test to acceptance criteria, e.g. spec('PS-003', 'AC2')",
+    "gui: needs the Xvfb sidecar",
+    "multi_container: needs Docker Compose and more than one container",
+    "build: runs colcon / ros2 pkg create inside the image",
+    "slow: long-running; excluded from smoke runs",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tools/parity_report.py" = ["E501"]
+"tests/test_ps0*.py" = ["E501"]  # embedded shell scripts
+"tests/shell.py" = ["E501"]

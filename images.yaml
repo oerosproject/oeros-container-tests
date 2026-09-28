@@ -1,0 +1,43 @@
+# Image matrix: tier x family -> image reference. Tests never hard-code image names.
+#
+# osrf:  Docker Hub reference image. `digest` is the multi-arch index digest, so one value
+#        covers x86-64 and arm64. Empty means "unpinned tag"; tools/refresh_digests.py fills it
+#        and CI refuses unpinned images (REQUIRE_PINNED_DIGESTS=1).
+# oeros: candidate image name. Registry and tag come from `defaults` and can be overridden
+#        with OEROS_REGISTRY / OEROS_TAG; OEROS_SOURCE=local uses the locally loaded image
+#        `<image>:<tag>-<arch>` with no registry prefix (see tools/load_oeros.py).
+#
+# Keep each osrf entry on one line: tools/refresh_digests.py edits the `digest` field in place.
+
+defaults:
+  oeros_registry: ghcr.io/oerosproject
+  oeros_tag: lyrical-wrynose
+
+# The six REP-2001 tiers. `tiers: [all]` in a spec's front matter means these.
+tiers:
+  ros-core:
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-core, digest: "sha256:08e9177b56033fb370f572be88ad61d9682b84067086a943fb6960fa2088f530"}
+    oeros: {image: oeros-container-ros-core}
+  ros-base:
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-base, digest: "sha256:0c19f326a339ed770ef1d4c0646a8b53bdb49dd5ff74b6de41ebdb8ac21e1806"}
+    oeros: {image: oeros-container-ros-base}
+  perception:
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-perception, digest: "sha256:b3268d03ff1b9069627d215cdac870f83faad2425d17ce0d8d56a65c15b878b6"}
+    oeros: {image: oeros-container-perception}
+  simulation:
+    osrf:  {repo: docker.io/osrf/ros, tag: lyrical-simulation, digest: "sha256:e4a9a9a8f14dc509563f8d0786452e2982ac70f4132e5432e5986e6005e1b8ba"}
+    oeros: {image: oeros-container-simulation}
+  desktop:
+    osrf:  {repo: docker.io/osrf/ros, tag: lyrical-desktop, digest: "sha256:cd0f24da968e3a7e8d0ef76b8d3684483235c86f5ab6a69ca2d4c9d7368a71f7"}
+    oeros: {image: oeros-container-desktop}
+  desktop-full:
+    osrf:  {repo: docker.io/osrf/ros, tag: lyrical-desktop-full, digest: "sha256:12f03ad224f4f7801c4eeb320934b198fe0b9536d70f2f617894da08ca3bedba"}
+    oeros: {image: oeros-container-desktop-full}
+
+# Build-tools pairing (PS-005, PS-006): OSRF ros-base ships colcon and rosdep, oeros keeps
+# them in ros-dev. Accepted, intended difference. Used only by specs that list `dev` in their
+# front matter tiers.
+extra_tiers:
+  dev:
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-base, digest: "sha256:0c19f326a339ed770ef1d4c0646a8b53bdb49dd5ff74b6de41ebdb8ac21e1806"}
+    oeros: {image: oeros-container-ros-dev}
