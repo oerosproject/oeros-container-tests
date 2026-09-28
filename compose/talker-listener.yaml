@@ -1,0 +1,27 @@
+# PS-004: talker and listener in two containers. Image refs come from the environment so the
+# same file serves both families: TALKER_IMAGE and LISTENER_IMAGE are set by the test fixture.
+# ROS_DOMAIN_ID is set per test; the compose project gives each test its own network.
+name: ${COMPOSE_PROJECT_NAME:-oeros-talker-listener}
+
+x-ros-env: &ros-env
+  ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+  RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-}
+
+services:
+  talker:
+    image: ${TALKER_IMAGE:?set TALKER_IMAGE}
+    command: ["sh", "-c", ". /opt/ros/lyrical/setup.sh && exec ros2 run demo_nodes_cpp talker"]
+    environment: *ros-env
+    healthcheck:
+      test: ["CMD-SHELL", ". /opt/ros/lyrical/setup.sh && ros2 node list | grep -q talker"]
+      interval: 3s
+      timeout: 10s
+      retries: 10
+
+  listener:
+    image: ${LISTENER_IMAGE:?set LISTENER_IMAGE}
+    command: ["sh", "-c", ". /opt/ros/lyrical/setup.sh && exec ros2 run demo_nodes_cpp listener"]
+    environment: *ros-env
+    depends_on:
+      talker:
+        condition: service_healthy

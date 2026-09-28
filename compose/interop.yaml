@@ -1,0 +1,27 @@
+# PS-004 AC3/AC4: an oeros talker with an OSRF listener, and the reverse. Same shape as
+# talker-listener.yaml, but RMW_IMPLEMENTATION must be pinned: if the families default to
+# different middleware, cross-family runs would fail for reasons unrelated to parity.
+name: ${COMPOSE_PROJECT_NAME:-oeros-interop}
+
+x-ros-env: &ros-env
+  ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+  RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:?pin RMW_IMPLEMENTATION for cross-family runs}
+
+services:
+  talker:
+    image: ${TALKER_IMAGE:?set TALKER_IMAGE}
+    command: ["sh", "-c", ". /opt/ros/lyrical/setup.sh && exec ros2 run demo_nodes_cpp talker"]
+    environment: *ros-env
+    healthcheck:
+      test: ["CMD-SHELL", ". /opt/ros/lyrical/setup.sh && ros2 node list | grep -q talker"]
+      interval: 3s
+      timeout: 10s
+      retries: 10
+
+  listener:
+    image: ${LISTENER_IMAGE:?set LISTENER_IMAGE}
+    command: ["sh", "-c", ". /opt/ros/lyrical/setup.sh && exec ros2 run demo_nodes_cpp listener"]
+    environment: *ros-env
+    depends_on:
+      talker:
+        condition: service_healthy

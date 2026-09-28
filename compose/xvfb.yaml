@@ -1,0 +1,20 @@
+# PS-011: a shared virtual display for GUI tools. The sidecar owns display :99 and shares
+# /tmp/.X11-unix, so both image families draw on the same display (no xhost, no host X11).
+# The test fixture adds the ROS container with DISPLAY=:99 and the same volume.
+name: ${COMPOSE_PROJECT_NAME:-oeros-xvfb}
+
+services:
+  xvfb:
+    build: ./xvfb
+    image: oeros-tests/xvfb:local
+    command: ["Xvfb", ":99", "-screen", "0", "1280x800x24", "-nolisten", "tcp", "-ac"]
+    volumes:
+      - x11:/tmp/.X11-unix
+    healthcheck:
+      test: ["CMD", "xdpyinfo", "-display", ":99"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  x11:
