@@ -1,0 +1,14 @@
+# PS-013 differences that are accepted and intended, so the report can tell them apart from
+# gaps. `side` is only_osrf (oeros lacks it) or only_oeros. `tiers: all` means the six REP-2001
+# tiers; the dev tier pairs OSRF ros-base with oeros ros-dev and is not listed here.
+intended:
+  - kind: tools
+    name: colcon
+    side: only_osrf
+    tiers: all
+    reason: oeros keeps build tools in ros-dev (accepted difference)
+  - kind: tools
+    name: rosdep
+    side: only_osrf
+    tiers: all
+    reason: oeros keeps build tools in ros-dev (accepted difference)
