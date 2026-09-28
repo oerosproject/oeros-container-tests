@@ -1,0 +1,23 @@
+# PS-012 recorded contract for the oeros candidate images.
+# Recorded 2026-09-27 from oeros-container-ros-core and oeros-container-ros-base built from
+# meta-oeros 8a4a05b. This is a regression baseline, not a target: the parity gaps (no
+# entrypoint, no baked-in ROS_DISTRO) are reported by PS-001. When meta-oeros changes one of
+# these values on purpose, update this file in the same change.
+config:
+  entrypoint: []
+  cmd: [/bin/sh]
+  user: ""
+  workdir: ""
+  env: {}
+files:
+  - /ros_entrypoint.sh
+  - /opt/ros/lyrical/setup.bash
+  - /opt/ros/lyrical/setup.sh
+shell: bash.bash
+# Per-tier overrides; `config` merges key by key.
+tiers:
+  desktop-full:
+    config:
+      workdir: /root
+      env:
+        QT_X11_NO_MITSHM: "1"
