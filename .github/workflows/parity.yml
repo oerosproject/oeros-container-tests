@@ -1,0 +1,165 @@
+# Container parity suite: runs the same `nox -s ci` entry point as a local run, one job per
+# tier and architecture, with both image families on the same runner.
+#
+# Heavy builds stay on GitLab (Spec 0014): bitbake builds and pushes the oeros images, then
+# GitLab sends a repository_dispatch event carrying the tag. This workflow only pulls and tests.
+name: parity
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * *" # nightly
+  repository_dispatch:
+    types: [oeros-images-pushed]
+  workflow_dispatch:
+    inputs:
+      tiers:
+        description: "Tiers to test: 'all' or a space-separated list"
+        default: all
+      arches:
+        description: "Architectures: 'all' or a space-separated list of amd64 arm64"
+        default: amd64
+      oeros_tag:
+        description: "oeros image tag to test (default: images.yaml)"
+        default: ""
+  workflow_call:
+    inputs:
+      tiers:
+        type: string
+        default: all
+      arches:
+        type: string
+        default: amd64
+      oeros_tag:
+        type: string
+        default: ""
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: false
+      DOCKERHUB_TOKEN:
+        required: false
+
+permissions:
+  contents: read
+  packages: read
+  pull-requests: write # the report job comments the parity change on PRs
+
+concurrency:
+  group: parity-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install nox
+      - run: nox -s lint
+
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      oeros_tag: ${{ steps.matrix.outputs.oeros_tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - id: matrix
+        env:
+          EVENT: ${{ github.event_name }}
+          IN_TIERS: ${{ inputs.tiers || github.event.client_payload.tiers }}
+          IN_ARCHES: ${{ inputs.arches || github.event.client_payload.arches }}
+          IN_TAG: ${{ inputs.oeros_tag || github.event.client_payload.oeros_tag }}
+        run: |
+          case "$EVENT" in
+            pull_request) tiers="ros-core ros-base"; arches="amd64" ;;
+            push)         tiers="all";               arches="amd64" ;;
+            schedule)     tiers="all";               arches="all" ;;
+            *)            tiers="${IN_TIERS:-all}";  arches="${IN_ARCHES:-amd64}" ;;
+          esac
+          echo "matrix=$(python -m tools.matrix github-matrix --tiers "$tiers" --arches "$arches")" >> "$GITHUB_OUTPUT"
+          echo "oeros_tag=$IN_TAG" >> "$GITHUB_OUTPUT"
+
+  parity:
+    needs: [lint, resolve]
+    name: parity (${{ matrix.tier }}, ${{ matrix.arch }})
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrix) }}
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      RUN_ID: ${{ matrix.tier }}-${{ matrix.arch }}
+      OEROS_TAG: ${{ needs.resolve.outputs.oeros_tag }}
+      # CI refuses unpinned OSRF images. Run the refresh-digests workflow once to fill them in.
+      REQUIRE_PINNED_DIGESTS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free disk for the desktop tiers
+        if: startsWith(matrix.tier, 'desktop') || matrix.tier == 'simulation'
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL
+          docker system prune -af || true
+          df -h /
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Docker Hub login (avoids anonymous pull limits)
+        if: env.DOCKERHUB_USERNAME != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: GHCR login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: pip install nox
+      - name: Run the parity specs
+        run: nox -s ci -- --tier "${{ matrix.tier }}" --arch "${{ matrix.arch }}"
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ matrix.tier }}-${{ matrix.arch }}
+          path: results/
+          if-no-files-found: warn
+
+  report:
+    needs: [resolve, parity]
+    if: always() && needs.resolve.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: results-*
+          path: all-results
+      - name: Build the parity matrix
+        run: |
+          dirs=$(find all-results -name parity.json -printf '%h\n' | sort)
+          if [ -z "$dirs" ]; then echo "no results" >> "$GITHUB_STEP_SUMMARY"; exit 0; fi
+          python -m tools.parity_report $dirs --out report | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parity-report
+          path: report/
+          if-no-files-found: ignore
+      # TODO (plan, "Where it shows up"): publish JUnit as check runs, comment the parity
+      # change on PRs (cells that changed against main), deploy Allure and the matrix history
+      # to GitHub Pages from main and nightly runs, and open one issue per new gap.

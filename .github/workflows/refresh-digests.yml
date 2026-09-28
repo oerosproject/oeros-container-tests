@@ -1,0 +1,31 @@
+# Weekly: pin the OSRF reference images in images.yaml to their current index digests and open
+# a PR with the change, so a moving OSRF tag cannot change results silently.
+name: refresh-digests
+
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m tools.refresh_digests
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          branch: refresh-osrf-digests
+          commit-message: "images: refresh OSRF reference digests"
+          title: "images: refresh OSRF reference digests"
+          body: |
+            Weekly digest refresh from `tools/refresh_digests.py`. Review the parity run on this
+            PR: a change in a reference image can move the results.
+          add-paths: images.yaml
