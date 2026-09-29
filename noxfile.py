@@ -102,6 +102,29 @@ def report(session: nox.Session) -> None:
 
 
 @nox.session
+def manual(session: nox.Session) -> None:
+    """Regenerate the generated manual guides from a recorded run of their specs."""
+    _install(session)
+    run_id = time.strftime("manual-%Y%m%d-%H%M%S")
+    session.run(
+        "pytest",
+        "--record-commands",
+        "--run-id",
+        run_id,
+        *[arg for spec in ("PS-001", "PS-002", "PS-005", "PS-013") for arg in ("--spec", spec)],
+        "--tier",
+        "ros-base",
+        "--tier",
+        "dev",
+        *session.posargs,
+        success_codes=[0, 1],
+    )
+    session.run(
+        "python", "-m", "tools.gen_manual", "--from", str(RESULTS / run_id / "commands.json")
+    )
+
+
+@nox.session
 def lint(session: nox.Session) -> None:
     """spec-lint, ruff, YAML validation."""
     _install(session)

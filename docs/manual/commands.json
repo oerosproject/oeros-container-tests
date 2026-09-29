@@ -1,0 +1,282 @@
+{
+ "PS-001": {
+  "steps": [
+   {
+    "cmd": [
+     "sh",
+     "-c",
+     "echo \"$ROS_DISTRO $ROS_VERSION $ROS_PYTHON_VERSION\""
+    ],
+    "covers": [
+     "AC1"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   },
+   {
+    "cmd": [
+     "-c",
+     ". /opt/ros/lyrical/setup.bash"
+    ],
+    "covers": [
+     "AC2"
+    ],
+    "entrypoint": "bash",
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   },
+   {
+    "cmd": [
+     "-c",
+     ". /opt/ros/lyrical/setup.sh"
+    ],
+    "covers": [
+     "AC3"
+    ],
+    "entrypoint": "sh",
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   },
+   {
+    "cmd": [
+     "ros2",
+     "--help"
+    ],
+    "covers": [
+     "AC4"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   },
+   {
+    "cmd": [
+     "sh",
+     "-c",
+     "command -v ros2"
+    ],
+    "covers": [
+     "AC5"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   },
+   {
+    "cmd": [
+     "python3",
+     "-c",
+     "\nimport rclpy\ncontext = rclpy.Context()\nrclpy.init(context=context)\nprint(context.get_domain_id())\ncontext.try_shutdown()\n"
+    ],
+    "covers": [
+     "AC6"
+    ],
+    "entrypoint": null,
+    "env": {
+     "ROS_DOMAIN_ID": "42"
+    },
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   },
+   {
+    "cmd": [
+     "sh",
+     "-c",
+     ". /opt/ros/lyrical/setup.sh || exit 1\nros2 doctor --report 2>&1 | grep 'middleware name'"
+    ],
+    "covers": [
+     "AC8"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   }
+  ]
+ },
+ "PS-002": {
+  "steps": [
+   {
+    "cmd": [
+     "sh",
+     "-c",
+     ". /opt/ros/lyrical/setup.sh || exit 1\nros2 pkg list"
+    ],
+    "covers": [
+     "AC1",
+     "AC4"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   },
+   {
+    "cmd": [
+     "sh",
+     "-c",
+     ". /opt/ros/lyrical/setup.sh || exit 1\nros2 pkg executables"
+    ],
+    "covers": [
+     "AC2",
+     "AC4"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   },
+   {
+    "cmd": [
+     "sh",
+     "-c",
+     ". /opt/ros/lyrical/setup.sh || exit 1\nros2 interface list"
+    ],
+    "covers": [
+     "AC3",
+     "AC4"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   }
+  ]
+ },
+ "PS-005": {
+  "steps": [
+   {
+    "cmd": [
+     "sh",
+     "-c",
+     ". /opt/ros/lyrical/setup.sh || exit 1\n\nmkdir -p /tmp/ws/src && cd /tmp/ws/src || exit 1\nros2 pkg create --build-type ament_cmake --node-name my_node my_cmake_pkg >/tmp/create1.log 2>&1; rc=$?\necho \"##CREATE_CMAKE\"; echo \"exit=$rc\"\nros2 pkg create --build-type ament_python --node-name my_py_node my_py_pkg >/tmp/create2.log 2>&1; rc=$?\necho \"##CREATE_PYTHON\"; echo \"exit=$rc\"\ncd /tmp/ws\ncolcon build >/tmp/build.log 2>&1; rc=$?\necho \"##BUILD\"; echo \"exit=$rc\"; tail -n 5 /tmp/build.log\n. install/setup.sh\necho \"##RUN_CMAKE\"; ros2 run my_cmake_pkg my_node; echo \"exit=$?\"\necho \"##RUN_PYTHON\"; ros2 run my_py_pkg my_py_node; echo \"exit=$?\"\n"
+    ],
+    "covers": [
+     "AC1",
+     "AC2",
+     "AC3",
+     "AC4"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   }
+  ]
+ },
+ "PS-013": {
+  "steps": [
+   {
+    "cmd": [
+     "sh",
+     "-c",
+     ". /opt/ros/lyrical/setup.sh || exit 1\nros2 pkg list"
+    ],
+    "covers": [
+     "AC1",
+     "AC2"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   },
+   {
+    "cmd": [
+     "sh",
+     "-c",
+     ". /opt/ros/lyrical/setup.sh || exit 1\nros2 pkg executables"
+    ],
+    "covers": [
+     "AC1",
+     "AC2"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   },
+   {
+    "cmd": [
+     "sh",
+     "-c",
+     ". /opt/ros/lyrical/setup.sh || exit 1\nros2 interface list"
+    ],
+    "covers": [
+     "AC1",
+     "AC2"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   },
+   {
+    "cmd": [
+     "sh",
+     "-c",
+     "for t in colcon rosdep bash python3; do command -v \"$t\" >/dev/null && echo \"$t\"; done"
+    ],
+    "covers": [
+     "AC1",
+     "AC2"
+    ],
+    "entrypoint": null,
+    "env": {},
+    "families": [
+     "oeros",
+     "osrf"
+    ],
+    "volumes": []
+   }
+  ]
+ }
+}
