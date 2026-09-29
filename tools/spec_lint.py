@@ -5,16 +5,20 @@
 * every `@pytest.mark.spec(...)` names a known spec and criterion
 * images.yaml, gaps.yaml, contracts/ and compose/ parse as YAML
 * gaps.yaml entries point at real specs and criteria
+* every spec with tests has a manual guide in docs/manual/ that names each tested criterion;
+  the generated guides must match docs/manual/commands.json (tools/gen_manual.py)
 """
 
 from __future__ import annotations
 
 import ast
+import re
 import sys
 from pathlib import Path
 
 import yaml
 
+from tools import gen_manual
 from tools import specs as specmod
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -82,6 +86,24 @@ def lint(root: Path = ROOT) -> list[str]:
                 errors.append(f"{spec.path.name}: {spec.status} but source_sha is not pinned")
 
     errors += _lint_yaml(root, specs)
+    errors += _lint_manual(root, specs, traced)
+    return errors
+
+
+def _lint_manual(root: Path, specs: dict, traced: dict) -> list[str]:
+    errors = gen_manual.stale_guides(root)
+    for spec in specs.values():
+        tested = [ac for ac in spec.criteria if (spec.id, ac) in traced]
+        if not tested or spec.id in gen_manual.GENERATED:
+            continue
+        guide = root / "docs" / "manual" / spec.path.name
+        if not guide.exists():
+            errors.append(f"docs/manual/{spec.path.name}: missing manual guide for {spec.id}")
+            continue
+        text = guide.read_text()
+        for ac in tested:
+            if re.search(rf"\b{ac}\b", text) is None:
+                errors.append(f"docs/manual/{spec.path.name}: does not mention {ac}")
     return errors
 
 

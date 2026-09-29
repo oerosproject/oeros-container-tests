@@ -34,11 +34,19 @@ nox -s report
 | `nox -s ci` | the invocation GitHub Actions uses (requires pinned OSRF digests) |
 | `nox -s report [-- <results dirs>]` | build the parity matrix from a run |
 | `nox -s lint` | spec-lint, ruff |
+| `nox -s manual` | regenerate the generated guides in `docs/manual/` from a recorded run |
 
 Everything after `--` goes to pytest, for example `nox -s parity -- --spec PS-010 --tier ros-base -x`.
 Options added by this suite: `--tier`, `--family`, `--spec` (each repeatable), `--arch`,
 `--run-id`, `--results-dir`. Results land in `results/<run-id>/` (`results/latest` links to the
 last run): `junit.xml`, `allure-results/`, `parity.json`, `traceability.json`, `artifacts/`.
+
+## Manual guides
+
+[`docs/manual/`](docs/manual/README.md) has step-by-step instructions for running each spec by
+hand, tagged with the same `AC<n>` IDs as the tests. PS-001, 002, 005 and 013 are generated from
+the commands the tests run (`pytest --record-commands`, then `python -m tools.gen_manual`), so
+they cannot drift; the others are hand-written and `spec-lint` fails if one omits a criterion.
 
 ## Environment variables
 
@@ -61,7 +69,8 @@ contracts/      PS-012 recorded contracts per family, PS-013 intended difference
 compose/        PS-004 / PS-011 compose files (image refs from env vars)
 workspaces/     PS-005 / PS-006 fixtures
 tests/          conftest.py, plugins/ (options, spec traceability), runtime.py, test_psNNN_*.py
-tools/          spec_lint, parity_report, matrix, load_oeros, refresh_digests
+docs/manual/    step-by-step guides for running each spec by hand (see docs/manual/README.md)
+tools/          spec_lint, parity_report, matrix, load_oeros, refresh_digests, gen_manual
 .github/        parity.yml (reusable), refresh-digests.yml (weekly)
 ```
 
