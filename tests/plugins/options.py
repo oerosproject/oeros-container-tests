@@ -34,6 +34,11 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     group.addoption("--spec", action="append", help="run only this spec, e.g. PS-004 (repeatable)")
     group.addoption("--arch", default=_host_arch(), choices=matrixmod.ARCHES)
     group.addoption("--run-id", default=time.strftime("%Y%m%d-%H%M%S"))
+    group.addoption(
+        "--record-commands",
+        action="store_true",
+        help="write the runtime commands each test issues to <results>/commands.json",
+    )
     group.addoption("--results-dir", default="results", help="parent of results/<run-id>/")
 
 

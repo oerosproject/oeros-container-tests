@@ -17,6 +17,8 @@ from pathlib import Path
 
 import pytest
 
+from tests import recording
+
 RESULTS_DIR = pytest.StashKey[Path]()
 ARCH = pytest.StashKey[str]()
 _META = pytest.StashKey[dict]()
@@ -67,6 +69,12 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     config.stash[_RECORDS] = {}
 
 
+def pytest_runtest_setup(item: pytest.Item) -> None:
+    spec_id, criteria = spec_markers(item)
+    params = item.callspec.params if hasattr(item, "callspec") else {}
+    recording.begin_test(spec_id, criteria, params.get("tier"))
+
+
 def pytest_runtest_logreport(report: pytest.TestReport) -> None:
     outcome = outcome_of(report)
     if outcome is None:
@@ -104,6 +112,8 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
     if not records or results_dir is None:
         return
     results_dir.mkdir(parents=True, exist_ok=True)
+    if recording.events is not None:
+        (results_dir / "commands.json").write_text(json.dumps(recording.events, indent=1) + "\n")
 
     parity = []
     trace: dict[str, list[dict]] = {}
@@ -151,6 +161,8 @@ _config: pytest.Config | None = None
 def pytest_configure(config: pytest.Config) -> None:
     global _config
     _config = config
+    if config.getoption("--record-commands", default=False):
+        recording.start()
 
 
 def _current_config() -> pytest.Config:

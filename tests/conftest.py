@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from tests import recording
 from tests.plugins.spec_trace import RESULTS_DIR, spec_markers
 from tests.runtime import ProbeResult, Runtime
 from tools import matrix as matrixmod
@@ -56,6 +57,7 @@ def image_for(request, matrix, tier, runtime, platform_name, _pulled):
         except matrixmod.MatrixError as exc:
             pytest.fail(str(exc), pytrace=False)
         request.node.user_properties.append((f"image:{family}", ref))
+        recording.note_image(ref, family)
         if (ref, platform_name) not in _pulled:
             if family == "oeros" and os.environ.get("OEROS_SOURCE", "registry") == "local":
                 if not runtime.has_image(ref):

@@ -15,6 +15,8 @@ import tempfile
 import uuid
 from dataclasses import dataclass
 
+from tests import recording
+
 TIMED_OUT = 124
 
 
@@ -88,6 +90,7 @@ class Runtime:
         volumes: list[str] | None = None,
         timeout: float = 60,
     ) -> ProbeResult:
+        recording.note_run(ref, cmd, env, entrypoint, volumes)
         name = f"oeros-probe-{uuid.uuid4().hex[:12]}"
         argv = [self.binary, "run", "--rm", "--name", name, "--platform", platform]
         for key, value in (env or {}).items():
