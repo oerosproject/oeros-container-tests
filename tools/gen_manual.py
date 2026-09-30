@@ -88,13 +88,18 @@ def shell_command(step: dict) -> str:
 
 
 def _example_images(matrix: matrixmod.Matrix, tiers: list[str]) -> list[tuple[str, str, str]]:
-    """(tier, osrf ref, oeros ref) for each tier, from images.yaml (tags, not digests)."""
+    """(tier, osrf ref, oeros ref) for each tier, from images.yaml (tags, not digests).
+
+    The oeros ref is the amd64 one; arm64 uses a different GHCR repository name (see
+    tools/matrix.py:oeros_registry_name).
+    """
     rows = []
     for tier in tiers:
         entry = matrix.entry(tier)
         osrf = f"{entry['osrf']['repo']}:{entry['osrf']['tag']}"
-        oeros = f"{matrix.defaults['oeros_registry']}/{entry['oeros']['image']}"
-        rows.append((tier, osrf, f"{oeros}:{matrix.defaults['oeros_tag']}"))
+        name = matrixmod.oeros_registry_name(entry["oeros"]["image"], "amd64")
+        oeros = f"{matrix.defaults['oeros_registry']}/{name}:{matrix.defaults['oeros_tag']}"
+        rows.append((tier, osrf, oeros))
     return rows
 
 

@@ -18,6 +18,25 @@ ROOT = Path(__file__).resolve().parent.parent
 FAMILIES = ("osrf", "oeros")
 ARCHES = ("amd64", "arm64")
 
+# GHCR repository name for an oeros image: "<multiconfig>-<suffix>", where the multiconfig is
+# the one the image was built under and the suffix is the oeros-container-<suffix> recipe name
+# with its prefix stripped. See yocto-containers/oci-image-naming-rules.md (Rule 1; our tiers
+# never come from an oeros-sdk-* multiconfig, so Rule 2's trimming never applies here). The tag
+# is always "latest": the OCI layout's own ref-name is "latest" regardless of build-time tag.
+ARCH_MULTICONFIG = {"amd64": "oeros-x86-64", "arm64": "oeros-arm64"}
+
+
+def oeros_registry_name(image: str, arch: str) -> str:
+    """GHCR repository name (no registry/tag) for a locally built oeros-container-<suffix> image."""
+    try:
+        multiconfig = ARCH_MULTICONFIG[arch]
+    except KeyError:
+        raise MatrixError(
+            f"unknown arch {arch!r} for an oeros registry name; known: "
+            f"{', '.join(ARCH_MULTICONFIG)}"
+        ) from None
+    return f"{multiconfig}-{image.removeprefix('oeros-container-')}"
+
 
 class MatrixError(Exception):
     pass
@@ -76,7 +95,8 @@ def image_ref(
         # A local store holds one image per name:tag, so the arch is part of the tag.
         return f"{entry['image']}:{tag}-{arch}" if arch else f"{entry['image']}:{tag}"
     registry = env.get("OEROS_REGISTRY") or matrix.defaults["oeros_registry"]
-    return f"{registry}/{entry['image']}:{tag}"
+    name = oeros_registry_name(entry["image"], arch or "amd64")
+    return f"{registry}/{name}:{tag}"
 
 
 def _github_matrix(matrix: Matrix, tiers: str, arches: str) -> dict:
@@ -100,6 +120,7 @@ def main(argv: list[str] | None = None) -> int:
     gh.add_argument("--arches", default="amd64", help="'all' or space/comma separated arches")
     refs = sub.add_parser("refs", help="print every image reference")
     refs.add_argument("--tier", action="append")
+    refs.add_argument("--arch", default="amd64", choices=ARCHES)
     args = parser.parse_args(argv)
 
     matrix = load()
@@ -109,7 +130,8 @@ def main(argv: list[str] | None = None) -> int:
         else:
             for tier in args.tier or matrix.known_tiers:
                 for family in FAMILIES:
-                    print(f"{tier:13} {family:6} {image_ref(matrix, family, tier)}")
+                    ref = image_ref(matrix, family, tier, arch=args.arch)
+                    print(f"{tier:13} {family:6} {ref}")
     except MatrixError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

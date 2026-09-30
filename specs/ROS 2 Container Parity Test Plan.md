@@ -105,7 +105,7 @@ Six REP-2001 tiers are paired one-to-one, for ROS 2 Lyrical on x86-64 and arm64.
 
 The last row exists because OSRF ros-base ships colcon and rosdep, while oeros keeps build tools in ros-dev. This split is an accepted, intended difference. PS-005 and PS-006 compare against that pairing, and PS-013 reports the split as known, not as a gap.
 
-oeros images are published to GHCR as `ghcr.io/oerosproject/<oeros candidate>:lyrical-<yocto-release>`, plus an immutable `-<git-sha>` tag. Leaf images (tools, ci, rviz, turtlebot3, foxglove-bridge) are not in this matrix yet; see Decisions.
+oeros images are published to GHCR as `ghcr.io/oerosproject/oeros-<arch>-<tier>:latest`, for example `oeros-x86-64-ros-core` (amd64) and `oeros-arm64-ros-core` (arm64) — the architecture is baked into the repository name rather than the tag, and the tag is always `latest` (see the Decisions entry below and `images.yaml`). Leaf images (tools, ci, rviz, turtlebot3, foxglove-bridge) are not in this matrix yet; see Decisions.
 
 The matrix lives in one file, `images.yaml`, keyed by tier and family. Tests never hard-code image names. Image references are pinned by digest in CI so a moving OSRF tag cannot change results silently, and a weekly job refreshes the pins.
 
@@ -185,7 +185,7 @@ One `nox` command runs a named slice of the suite on a developer machine, using 
 **Getting the oeros images.** There are two supported sources, chosen in `images.yaml` or overridden by environment variable:
 
 1. **Local build:** load the OCI output from the bitbake deploy directory with the meta-oeros load/push helper (`scripts/`, added in commit `1d0a5c6`), then set `OEROS_SOURCE=local`.
-2. **Registry:** set `OEROS_REGISTRY=<registry>/<namespace>` to pull published images. The default is GHCR (`ghcr.io/oerosproject`), with tags of the form `lyrical-<yocto-release>`, or the immutable `lyrical-<yocto-release>-<git-sha>` for pinned runs.
+2. **Registry:** set `OEROS_REGISTRY=<registry>/<namespace>` to pull published images. The default is GHCR (`ghcr.io/oerosproject`); the repository name is per architecture (`oeros-x86-64-<tier>` or `oeros-arm64-<tier>`) and always tagged `latest` — see the Decisions entry above.
 
 OSRF images are always pulled from Docker Hub by pinned digest.
 
@@ -293,7 +293,7 @@ The biggest risk is middleware mismatch: if the two families default to differen
 
 These were the open questions in the first draft. All five are now decided.
 
-- [x] **Registry and tag scheme:** GHCR. Images are published as `ghcr.io/oerosproject/oeros-container-<tier>:lyrical-<yocto-release>` (for example `:lyrical-wrynose`), plus an immutable `:lyrical-<yocto-release>-<git-sha>` tag. Tests pin the immutable tag or digest. This still needs to be reconciled with RFC 0001 on binary artifact hosting.
+- [x] **Registry and tag scheme:** GHCR. Superseded 2026-09-30 by the actual naming meta-oeros CI uses (`yocto-containers/oci-image-naming-rules.md`): images are published per architecture as `ghcr.io/oerosproject/oeros-x86-64-<tier>:latest` or `oeros-arm64-<tier>:latest` — the build's multiconfig name plus the recipe suffix, always tagged `latest` (the OCI layout carries no other tag to preserve). The original plan here (`oeros-container-<tier>:lyrical-<yocto-release>` plus an immutable git-sha tag) was never built; there is no digest or immutable-tag pin for oeros images, only for the OSRF reference. This still needs to be reconciled with RFC 0001 on binary artifact hosting.
 - [x] **Repository home:** standalone `oeros-container-tests` repository. meta-oeros CI calls it as a reusable workflow.
 - [x] **ros-base vs ros-dev build-tools split:** accepted as an intended difference. PS-005 and PS-006 keep the ros-dev / devcontainer pairing, and PS-013 reports the split as known, not as a gap.
 - [x] **Podman:** Docker first, podman later. Runtime-specific calls stay behind a small fixture so a podman nightly job can be added without changing the specs. Podman is not part of the initial matrix.

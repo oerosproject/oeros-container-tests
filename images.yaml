@@ -3,15 +3,21 @@
 # osrf:  Docker Hub reference image. `digest` is the multi-arch index digest, so one value
 #        covers x86-64 and arm64. Empty means "unpinned tag"; tools/refresh_digests.py fills it
 #        and CI refuses unpinned images (REQUIRE_PINNED_DIGESTS=1).
-# oeros: candidate image name. Registry and tag come from `defaults` and can be overridden
-#        with OEROS_REGISTRY / OEROS_TAG; OEROS_SOURCE=local uses the locally loaded image
-#        `<image>:<tag>-<arch>` with no registry prefix (see tools/load_oeros.py).
+# oeros: `image` is the oeros-container-<suffix> bitbake recipe name. It names the local OCI
+#        layout (tools/load_oeros.py) and, for a registry pull, is turned into the GHCR
+#        repository name per arch: "<multiconfig>-<suffix>", e.g. oeros-x86-64-ros-core for
+#        amd64 and oeros-arm64-ros-core for arm64 (tools/matrix.py:oeros_registry_name, mirrors
+#        yocto-containers/oci-image-naming-rules.md). Registry and tag come from `defaults` and
+#        can be overridden with OEROS_REGISTRY / OEROS_TAG; OEROS_SOURCE=local instead uses the
+#        locally loaded image `<image>:<tag>-<arch>` with no registry prefix.
 #
 # Keep each osrf entry on one line: tools/refresh_digests.py edits the `digest` field in place.
 
 defaults:
   oeros_registry: ghcr.io/oerosproject
-  oeros_tag: lyrical-wrynose
+  # The pushed images are always tagged `latest` (the OCI layout's own ref-name); the build
+  # carries no other tag to preserve. Override with OEROS_TAG if that ever changes.
+  oeros_tag: latest
 
 # The six REP-2001 tiers. `tiers: [all]` in a spec's front matter means these.
 tiers:

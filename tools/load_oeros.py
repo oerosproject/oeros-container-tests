@@ -3,8 +3,8 @@
     python -m tools.load_oeros [--tier ros-core ...] [--arch amd64] [--mc oeros-x86-64]
 
 Each image is stored as `<image>:<tag>-<arch>` (the name OEROS_SOURCE=local expects), for
-example `oeros-container-ros-core:lyrical-wrynose-amd64`. Images whose ID already matches the
-OCI layout are skipped. Uses `oci:` layouts directly, so no skopeo is needed.
+example `oeros-container-ros-core:latest-amd64`. Images whose ID already matches the OCI
+layout are skipped. Uses `oci:` layouts directly, so no skopeo is needed.
 
 Environment: OEROS_BUILD_DIR (bitbake build dir), OEROS_TAG, CONTAINER_RUNTIME.
 """
