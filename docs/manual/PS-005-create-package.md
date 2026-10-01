@@ -11,7 +11,7 @@ Run every step once with the OSRF image and once with the oeros image, and compa
 
 | Tier | OSRF image | oeros image |
 | --- | --- | --- |
-| `dev` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-x86-64-ros-dev:latest` |
+| `dev` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-ros-dev:lyrical-amd64` |
 
 ```sh
 IMAGE=<one of the images above>

@@ -11,12 +11,12 @@ Run every step once with the OSRF image and once with the oeros image, and compa
 
 | Tier | OSRF image | oeros image |
 | --- | --- | --- |
-| `ros-core` | `docker.io/library/ros:lyrical-ros-core` | `ghcr.io/oerosproject/oeros-x86-64-ros-core:latest` |
-| `ros-base` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-x86-64-ros-base:latest` |
-| `perception` | `docker.io/library/ros:lyrical-perception` | `ghcr.io/oerosproject/oeros-x86-64-perception:latest` |
-| `simulation` | `docker.io/osrf/ros:lyrical-simulation` | `ghcr.io/oerosproject/oeros-x86-64-simulation:latest` |
-| `desktop` | `docker.io/osrf/ros:lyrical-desktop` | `ghcr.io/oerosproject/oeros-x86-64-desktop:latest` |
-| `desktop-full` | `docker.io/osrf/ros:lyrical-desktop-full` | `ghcr.io/oerosproject/oeros-x86-64-desktop-full:latest` |
+| `ros-core` | `docker.io/library/ros:lyrical-ros-core` | `ghcr.io/oerosproject/oeros-ros-core:lyrical-amd64` |
+| `ros-base` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-ros-base:lyrical-amd64` |
+| `perception` | `docker.io/library/ros:lyrical-perception` | `ghcr.io/oerosproject/desktop/oeros-perception:lyrical-amd64` |
+| `simulation` | `docker.io/osrf/ros:lyrical-simulation` | `ghcr.io/oerosproject/desktop/oeros-simulation:lyrical-amd64` |
+| `desktop` | `docker.io/osrf/ros:lyrical-desktop` | `ghcr.io/oerosproject/desktop/oeros-desktop:lyrical-amd64` |
+| `desktop-full` | `docker.io/osrf/ros:lyrical-desktop-full` | `ghcr.io/oerosproject/desktop/oeros-desktop-full:lyrical-amd64` |
 
 ```sh
 IMAGE=<one of the images above>

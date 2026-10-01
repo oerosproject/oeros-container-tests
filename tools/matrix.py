@@ -18,24 +18,17 @@ ROOT = Path(__file__).resolve().parent.parent
 FAMILIES = ("osrf", "oeros")
 ARCHES = ("amd64", "arm64")
 
-# GHCR repository name for an oeros image: "<multiconfig>-<suffix>", where the multiconfig is
-# the one the image was built under and the suffix is the oeros-container-<suffix> recipe name
-# with its prefix stripped. See yocto-containers/oci-image-naming-rules.md (Rule 1; our tiers
-# never come from an oeros-sdk-* multiconfig, so Rule 2's trimming never applies here). The tag
-# is always "latest": the OCI layout's own ref-name is "latest" regardless of build-time tag.
-ARCH_MULTICONFIG = {"amd64": "oeros-x86-64", "arm64": "oeros-arm64"}
 
+def oeros_name(entry: dict, tag: str, arch: str) -> str:
+    """`<namespace><repository>:<tag>-<arch>` for one oeros image, with no registry prefix.
 
-def oeros_registry_name(image: str, arch: str) -> str:
-    """GHCR repository name (no registry/tag) for a locally built oeros-container-<suffix> image."""
-    try:
-        multiconfig = ARCH_MULTICONFIG[arch]
-    except KeyError:
-        raise MatrixError(
-            f"unknown arch {arch!r} for an oeros registry name; known: "
-            f"{', '.join(ARCH_MULTICONFIG)}"
-        ) from None
-    return f"{multiconfig}-{image.removeprefix('oeros-container-')}"
+    `entry` is the tier's `oeros` mapping from images.yaml. The arch-specific tag is the one
+    meta-oeros publishes for each architecture, and the name a local load gives the image
+    (the build records it next to the OCI layout in <recipe>-oci.publish).
+    """
+    if arch not in ARCHES:
+        raise MatrixError(f"unknown arch {arch!r} for an oeros image; known: {', '.join(ARCHES)}")
+    return f"{entry.get('namespace', '')}{entry['repository']}:{tag}-{arch}"
 
 
 class MatrixError(Exception):
@@ -91,12 +84,11 @@ def image_ref(
             )
         return f"{entry['repo']}:{entry['tag']}"
     tag = env.get("OEROS_TAG") or matrix.defaults["oeros_tag"]
+    name = oeros_name(entry, tag, arch or "amd64")
     if env.get("OEROS_SOURCE", "registry") == "local":
-        # A local store holds one image per name:tag, so the arch is part of the tag.
-        return f"{entry['image']}:{tag}-{arch}" if arch else f"{entry['image']}:{tag}"
+        return name
     registry = env.get("OEROS_REGISTRY") or matrix.defaults["oeros_registry"]
-    name = oeros_registry_name(entry["image"], arch or "amd64")
-    return f"{registry}/{name}:{tag}"
+    return f"{registry}/{name}"
 
 
 def _github_matrix(matrix: Matrix, tiers: str, arches: str) -> dict:
