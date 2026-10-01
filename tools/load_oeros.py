@@ -1,10 +1,16 @@
-"""Load locally built oeros images from a bitbake deploy directory into the container store.
+"""Load locally built oeros images from a bitbake build directory into the container store.
 
     python -m tools.load_oeros [--tier ros-core ...] [--arch amd64] [--mc oeros-x86-64]
 
-Each image is stored as `<image>:<tag>-<arch>` (the name OEROS_SOURCE=local expects), for
-example `oeros-container-ros-core:latest-amd64`. Images whose ID already matches the OCI
-layout are skipped. Uses `oci:` layouts directly, so no skopeo is needed.
+Each image is stored under the name the build publishes it as, `<namespace><repository>:
+<tag>-<arch>` (the name OEROS_SOURCE=local expects), for example `oeros-ros-core:lyrical-amd64`
+or `desktop/oeros-desktop:lyrical-amd64`. Images whose ID already matches the OCI layout are
+skipped. Uses `oci:` layouts directly, so no skopeo is needed.
+
+The layout for a tier is found through the `<recipe>-oci.publish` file the build writes next to
+it: the one, in any multiconfig, whose repository and tag are the name images.yaml gives the
+tier. Layouts without a publish file (images the build did not publish, or older builds) are
+never loaded, so a stale layout cannot stand in for a current one.
 
 Environment: OEROS_BUILD_DIR (bitbake build dir), OEROS_TAG, CONTAINER_RUNTIME.
 """
@@ -22,15 +28,36 @@ from tests.runtime import Runtime
 from tools import matrix as matrixmod
 
 DEFAULT_BUILD_DIR = "/opt/yocto/meta-oeros/bitbake-builds/oeros-wrynose-lyrical/build"
-# arch -> (default multiconfig, machine)
-TARGETS = {
-    "amd64": ("oeros-x86-64", "genericx86-64"),
-    "arm64": ("oeros-arm64", "genericarm64"),
-}
 
 
-def layout_dir(build_dir: Path, mc: str, machine: str, image: str) -> Path:
-    return build_dir / f"tmp-{mc}" / "deploy" / "images" / machine / f"{image}-latest-oci"
+def read_publish(path: Path) -> dict[str, str]:
+    """Parse a <recipe>-oci.publish file (key=value lines) written by the meta-oeros build."""
+    fields = {}
+    for line in path.read_text().splitlines():
+        key, sep, value = line.partition("=")
+        if sep:
+            fields[key] = value
+    return fields
+
+
+def find_layout(build_dir: Path, image: str, ref: str, mc: str | None = None) -> Path | None:
+    """The OCI layout of recipe `image` that the build publishes as `ref` (name:tag).
+
+    Looks in tmp-<mc>/deploy/images/<machine>/ for every multiconfig, or just `mc`. Raises
+    SystemExit if two layouts claim the same name, which meta-oeros is built to prevent.
+    """
+    pattern = f"tmp-{mc}" if mc else "tmp-*"
+    found = []
+    for publish in sorted(build_dir.glob(f"{pattern}/deploy/images/*/{image}-oci.publish")):
+        fields = read_publish(publish)
+        if f"{fields.get('repository')}:{fields.get('tag')}" != ref:
+            continue
+        layout = publish.parent / fields["layout"]
+        if (layout / "index.json").exists():
+            found.append(layout)
+    if len(found) > 1:
+        raise SystemExit(f"{ref} is published by more than one layout: {[str(p) for p in found]}")
+    return found[0] if found else None
 
 
 def layout_image_id(layout: Path) -> str:
@@ -75,23 +102,25 @@ def load_layout(runtime: Runtime, layout: Path, ref: str) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tier", action="append", help="tier to load (default: all six)")
-    parser.add_argument("--arch", default="amd64", choices=list(TARGETS))
-    parser.add_argument("--mc", help="multiconfig (default: oeros-x86-64 or oeros-arm64)")
+    parser.add_argument("--arch", default="amd64", choices=list(matrixmod.ARCHES))
+    parser.add_argument("--mc", help="only look in this multiconfig (default: all of them)")
     parser.add_argument("--build-dir", default=os.environ.get("OEROS_BUILD_DIR", DEFAULT_BUILD_DIR))
     args = parser.parse_args(argv)
 
     matrix = matrixmod.load()
-    default_mc, machine = TARGETS[args.arch]
-    mc = args.mc or default_mc
     runtime = Runtime()
     env = {**os.environ, "OEROS_SOURCE": "local"}
     status = 0
     for tier in args.tier or matrix.all_tiers:
         image = matrix.entry(tier)["oeros"]["image"]
         ref = matrixmod.image_ref(matrix, "oeros", tier, env=env, arch=args.arch)
-        layout = layout_dir(Path(args.build_dir), mc, machine, image)
-        if not (layout / "index.json").exists():
-            print(f"{tier:13} missing  {layout}", file=sys.stderr)
+        layout = find_layout(Path(args.build_dir), image, ref, args.mc)
+        if layout is None:
+            print(
+                f"{tier:13} missing  {ref}: no {image}-oci.publish under "
+                f"{args.build_dir}/tmp-*/deploy/images/*/ publishes it (has the image been built?)",
+                file=sys.stderr,
+            )
             status = 1
             continue
         current = subprocess.run(
