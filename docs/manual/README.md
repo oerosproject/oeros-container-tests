@@ -17,22 +17,24 @@ Run each guide twice, once per image family, and compare. The pairs come from
 
 | Tier | OSRF image | oeros image (amd64) |
 | --- | --- | --- |
-| `ros-core` | `docker.io/library/ros:lyrical-ros-core` | `ghcr.io/oerosproject/oeros-x86-64-ros-core:latest` |
-| `ros-base` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-x86-64-ros-base:latest` |
-| `perception` | `docker.io/library/ros:lyrical-perception` | `ghcr.io/oerosproject/oeros-x86-64-perception:latest` |
-| `simulation` | `docker.io/osrf/ros:lyrical-simulation` | `ghcr.io/oerosproject/oeros-x86-64-simulation:latest` |
-| `desktop` | `docker.io/library/ros:lyrical-desktop` | `ghcr.io/oerosproject/oeros-x86-64-desktop:latest` |
-| `desktop-full` | `docker.io/osrf/ros:lyrical-desktop-full` | `ghcr.io/oerosproject/oeros-x86-64-desktop-full:latest` |
+| `ros-core` | `docker.io/library/ros:lyrical-ros-core` | `ghcr.io/oerosproject/oeros-ros-core:lyrical-amd64` |
+| `ros-base` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-ros-base:lyrical-amd64` |
+| `perception` | `docker.io/library/ros:lyrical-perception` | `ghcr.io/oerosproject/desktop/oeros-perception:lyrical-amd64` |
+| `simulation` | `docker.io/osrf/ros:lyrical-simulation` | `ghcr.io/oerosproject/desktop/oeros-simulation:lyrical-amd64` |
+| `desktop` | `docker.io/library/ros:lyrical-desktop` | `ghcr.io/oerosproject/desktop/oeros-desktop:lyrical-amd64` |
+| `desktop-full` | `docker.io/osrf/ros:lyrical-desktop-full` | `ghcr.io/oerosproject/desktop/oeros-desktop-full:lyrical-amd64` |
 
 `images.yaml` is the source of truth (the suite also pins the OSRF images by digest); check it
-if this table looks out of date. The oeros repository name bakes in the architecture:
-`oeros-x86-64-<tier>` for amd64, `oeros-arm64-<tier>` for arm64 (the tag is always `latest`,
-never a per-build tag). Locally built oeros images instead use the recipe name and are tagged
-`oeros-container-<tier>:latest-<arch>` after `python -m tools.load_oeros`.
+if this table looks out of date. oeros images are `<repository>:lyrical-<arch>`: the tag names the
+architecture (`lyrical-amd64`, `lyrical-arm64`), and the images from the desktop multiconfigs
+(`perception`, `simulation`, `desktop`, `desktop-full`) live under `desktop/`. The multi-architecture
+`lyrical` and `latest` tags also exist in the registry, but the tests use the arch-specific ones.
+Locally built oeros images get the same name, with no registry prefix, after
+`python -m tools.load_oeros` (for example `oeros-ros-core:lyrical-amd64`).
 
 ```sh
 export OSRF_IMAGE=docker.io/library/ros:lyrical-desktop
-export OEROS_IMAGE=ghcr.io/oerosproject/oeros-x86-64-desktop:latest   # oeros-arm64-desktop on arm64
+export OEROS_IMAGE=ghcr.io/oerosproject/desktop/oeros-desktop:lyrical-amd64   # lyrical-arm64 on arm64
 IMAGE=$OSRF_IMAGE    # then repeat the guide with IMAGE=$OEROS_IMAGE
 ```
 

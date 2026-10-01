@@ -16,7 +16,7 @@ set `CONTAINER_RUNTIME` to force one). Rootless podman works.
 ```sh
 # 1. load the locally built oeros images (from the bitbake deploy dir, no skopeo needed)
 python -m tools.load_oeros --tier ros-core --tier ros-base
-python -m tools.load_oeros --tier dev  # oeros-container-ros-dev (3.7 GB), for PS-005
+python -m tools.load_oeros --tier dev  # oeros-ros-dev:lyrical-amd64 (2.6 GB), for PS-005
 
 # 2. run the smoke slice against the local images
 OEROS_SOURCE=local nox -s smoke
@@ -54,7 +54,7 @@ they cannot drift; the others are hand-written and `spec-lint` fails if one omit
 | --- | --- |
 | `OEROS_SOURCE` | `registry` (default) pulls from GHCR; `local` uses images loaded by `tools.load_oeros` |
 | `OEROS_REGISTRY` | registry and namespace, default `ghcr.io/oerosproject` |
-| `OEROS_TAG` | oeros image tag, default `latest` (local images are `<tag>-<arch>`); a registry pull also resolves a per-arch repository name, `oeros-x86-64-<tier>` or `oeros-arm64-<tier>` (`tools/matrix.py:oeros_registry_name`, see `images.yaml`) |
+| `OEROS_TAG` | the distribution part of the oeros tag, default `lyrical`; the tests always use the arch-specific tag `<OEROS_TAG>-<arch>` (`lyrical-amd64`, `lyrical-arm64`), never the multi-architecture `lyrical` or `latest` index. Images are `<namespace><repository>:<tag>`, e.g. `oeros-ros-core:lyrical-amd64`, with `desktop/` in front for the `perception`, `simulation`, `desktop` and `desktop-full` tiers (`tools/matrix.py:oeros_name`, see `images.yaml`); local loads use that name with no registry prefix |
 | `OEROS_BUILD_DIR` | bitbake build dir for `tools.load_oeros` |
 | `CONTAINER_RUNTIME` | `docker` or `podman`; default is docker if its daemon is reachable, else podman |
 | `REQUIRE_PINNED_DIGESTS` | `1` refuses OSRF images without a digest in `images.yaml` (CI sets it) |
