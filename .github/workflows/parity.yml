@@ -1,7 +1,7 @@
 # Container parity suite: runs the same `nox -s ci` entry point as a local run, one job per
 # tier and architecture, with both image families on the same runner.
 #
-# Heavy builds stay on GitLab (Spec 0014): bitbake builds and pushes the oeros images, then
+# Heavy builds stay on GitLab (Spec 0014): bitbake builds and pushes the Oeros images, then
 # GitLab sends a repository_dispatch event carrying the tag. This workflow only pulls and tests.
 name: parity
 
@@ -22,7 +22,7 @@ on:
         description: "Architectures: 'all' or a space-separated list of amd64 arm64"
         default: amd64
       oeros_tag:
-        description: "oeros tag to test, without the -<arch> suffix (default: images.yaml)"
+        description: "Oeros tag to test, without the -<arch> suffix (default: images.yaml)"
         default: ""
   workflow_call:
     inputs:
