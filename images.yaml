@@ -11,6 +11,9 @@
 #        reference is `<namespace><repository>:<oeros_tag>-<arch>`, for example
 #        oeros-ros-core:lyrical-amd64 or desktop/oeros-desktop:lyrical-arm64, with
 #        `oeros_registry` in front for a registry pull and no prefix for OEROS_SOURCE=local.
+#        `arches` (optional, default both) lists the architectures the image is published for;
+#        the CI matrix skips the others. The desktop tiers are amd64 only until the
+#        oeros-arm64-desktop multiconfig has been built and pushed.
 #        The tests always use the arch-specific tag, never the multi-architecture `lyrical`
 #        or `latest` index tags. The build records the same names next to each OCI layout in
 #        <recipe>-oci.publish, and tools/load_oeros.py checks them against this file.
@@ -35,16 +38,16 @@ tiers:
     oeros: {image: oeros-container-ros-base, repository: oeros-ros-base}
   perception:
     osrf:  {repo: docker.io/library/ros, tag: lyrical-perception, digest: "sha256:b3268d03ff1b9069627d215cdac870f83faad2425d17ce0d8d56a65c15b878b6"}
-    oeros: {image: oeros-container-perception, repository: oeros-perception, namespace: desktop/}
+    oeros: {image: oeros-container-perception, repository: oeros-perception, namespace: desktop/, arches: [amd64]}
   simulation:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-simulation, digest: "sha256:e4a9a9a8f14dc509563f8d0786452e2982ac70f4132e5432e5986e6005e1b8ba"}
-    oeros: {image: oeros-container-simulation, repository: oeros-simulation, namespace: desktop/}
+    oeros: {image: oeros-container-simulation, repository: oeros-simulation, namespace: desktop/, arches: [amd64]}
   desktop:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-desktop, digest: "sha256:cd0f24da968e3a7e8d0ef76b8d3684483235c86f5ab6a69ca2d4c9d7368a71f7"}
-    oeros: {image: oeros-container-desktop, repository: oeros-desktop, namespace: desktop/}
+    oeros: {image: oeros-container-desktop, repository: oeros-desktop, namespace: desktop/, arches: [amd64]}
   desktop-full:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-desktop-full, digest: "sha256:12f03ad224f4f7801c4eeb320934b198fe0b9536d70f2f617894da08ca3bedba"}
-    oeros: {image: oeros-container-desktop-full, repository: oeros-desktop-full, namespace: desktop/}
+    oeros: {image: oeros-container-desktop-full, repository: oeros-desktop-full, namespace: desktop/, arches: [amd64]}
 
 # Build-tools pairing (PS-005, PS-006): OSRF ros-base ships colcon and rosdep, oeros keeps
 # them in ros-dev. Accepted, intended difference. Used only by specs that list `dev` in their

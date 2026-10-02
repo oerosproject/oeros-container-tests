@@ -49,6 +49,10 @@ class Matrix:
     def known_tiers(self) -> list[str]:
         return [*self.tiers, *self.extra_tiers]
 
+    def arches(self, tier: str) -> list[str]:
+        """Architectures the oeros image of `tier` is published for (images.yaml `arches`)."""
+        return list(self.entry(tier)["oeros"].get("arches", ARCHES))
+
     def entry(self, tier: str) -> dict:
         try:
             return {**self.tiers, **self.extra_tiers}[tier]
@@ -92,8 +96,9 @@ def image_ref(
 
 
 def _github_matrix(matrix: Matrix, tiers: str, arches: str) -> dict:
+    # "all" is the six REP-2001 tiers plus the extra ones (dev), so PS-005 runs in CI too.
     tier_list = (
-        matrix.all_tiers if tiers.strip() in ("", "all") else tiers.replace(",", " ").split()
+        matrix.known_tiers if tiers.strip() in ("", "all") else tiers.replace(",", " ").split()
     )
     arch_list = list(ARCHES) if arches.strip() == "all" else arches.replace(",", " ").split()
     for tier in tier_list:
@@ -101,7 +106,15 @@ def _github_matrix(matrix: Matrix, tiers: str, arches: str) -> dict:
     for arch in arch_list:
         if arch not in ARCHES:
             raise MatrixError(f"unknown arch {arch!r}; known: {', '.join(ARCHES)}")
-    return {"include": [{"tier": t, "arch": a} for t in tier_list for a in arch_list]}
+    # Skip a tier on an architecture its oeros image is not published for.
+    include = [
+        {"tier": t, "arch": a} for t in tier_list for a in arch_list if a in matrix.arches(t)
+    ]
+    if not include:
+        raise MatrixError(
+            f"nothing to test: none of the tiers {tier_list} is published for {arch_list}"
+        )
+    return {"include": include}
 
 
 def main(argv: list[str] | None = None) -> int:
