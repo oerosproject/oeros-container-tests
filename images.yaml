@@ -19,7 +19,13 @@
 #        Registry and tag come from `defaults` and can be overridden with OEROS_REGISTRY and
 #        OEROS_TAG.
 #
-# Keep each osrf entry on one line: tools/refresh_digests.py edits the `digest` field in place.
+# sloretz: the ros_oci_images publisher (github.com/sloretz/ros_oci_images), pulled from
+#          ghcr.io and pinned by digest like osrf. Its tags are multi-arch, so the digest
+#          covers both architectures and there is no arch-specific tag. Its failures are
+#          differences, not run failures (matrix.REPORT_ONLY_FAMILIES). It has no dev image.
+#
+# Keep each osrf and sloretz entry on one line: tools/refresh_digests.py edits the `digest`
+# field in place.
 
 defaults:
   oeros_registry: ghcr.io/oerosproject
@@ -32,21 +38,27 @@ tiers:
   ros-core:
     osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-core, digest: "sha256:08e9177b56033fb370f572be88ad61d9682b84067086a943fb6960fa2088f530"}
     oeros: {image: oeros-container-ros-core, repository: oeros-ros-core}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-ros-core, digest: "sha256:38f665b0ece01d1ab1c9dbf492bcd5ce5e7f26912cdedf4dd127118ca3ce28f9"}
   ros-base:
     osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-base, digest: "sha256:0c19f326a339ed770ef1d4c0646a8b53bdb49dd5ff74b6de41ebdb8ac21e1806"}
     oeros: {image: oeros-container-ros-base, repository: oeros-ros-base}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-ros-base, digest: "sha256:237a58b5ff86a9a392dcf1f9a795e7e0429b3ed363a6b69c9efd3243a2bc3c06"}
   perception:
     osrf:  {repo: docker.io/library/ros, tag: lyrical-perception, digest: "sha256:b3268d03ff1b9069627d215cdac870f83faad2425d17ce0d8d56a65c15b878b6"}
     oeros: {image: oeros-container-perception, repository: oeros-perception, namespace: desktop/}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-perception, digest: "sha256:cf21a0b6e145d6c86db3fd5a907688d3859edc897ceb4d989964dbbf69281770"}
   simulation:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-simulation, digest: "sha256:e4a9a9a8f14dc509563f8d0786452e2982ac70f4132e5432e5986e6005e1b8ba"}
     oeros: {image: oeros-container-simulation, repository: oeros-simulation, namespace: desktop/}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-simulation, digest: "sha256:79aaf7eebc78f6baf42b7a2062590fc20012c0d116515b4b5fbbcbe41fc00bce"}
   desktop:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-desktop, digest: "sha256:cd0f24da968e3a7e8d0ef76b8d3684483235c86f5ab6a69ca2d4c9d7368a71f7"}
     oeros: {image: oeros-container-desktop, repository: oeros-desktop, namespace: desktop/}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-desktop, digest: "sha256:837c00bbc9307c738646fc70ef495260d9430d42bc352e4e6d014d81fb065d6c"}
   desktop-full:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-desktop-full, digest: "sha256:12f03ad224f4f7801c4eeb320934b198fe0b9536d70f2f617894da08ca3bedba"}
     oeros: {image: oeros-container-desktop-full, repository: oeros-desktop-full, namespace: desktop/}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-desktop-full, digest: "sha256:a7e5d079f0f1831947f5e1461c05e5f0d37d6f81d4f76ceb9e57be72d064107a"}
 
 # Build-tools pairing (PS-005, PS-006): OSRF ros-base ships colcon and rosdep, oeros keeps
 # them in ros-dev. Accepted, intended difference. Used only by specs that list `dev` in their

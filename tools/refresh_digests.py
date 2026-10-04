@@ -2,9 +2,10 @@
 
     python -m tools.refresh_digests [--check]
 
-Asks the Docker Hub registry API for each image's manifest digest, so it needs neither Docker
-nor podman. Edits only the `digest` field of each one-line osrf entry, so comments and layout
-survive. With --check it changes nothing and exits 1 if any digest is empty or stale.
+Asks each image's registry (Docker Hub, or ghcr.io for the sloretz images) for its manifest
+digest, so it needs neither Docker nor podman. Edits only the `digest` field of each one-line
+external entry, so comments and layout survive. With --check it changes nothing and exits 1 if
+any digest is empty or stale.
 """
 
 from __future__ import annotations
@@ -34,23 +35,32 @@ ACCEPT = ", ".join(
 
 def current_digest(repo: str, tag: str) -> str:
     """Digest of the manifest (the index, for multi-arch images) that `repo:tag` points at."""
-    repo = repo.removeprefix("docker.io/")
-    if "/" not in repo:
-        repo = f"library/{repo}"
-    token_url = (
-        f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull"
-    )
+    first, _, rest = repo.partition("/")
+    if "." in first:  # a registry host such as ghcr.io; anything else is Docker Hub
+        host, path = first, rest
+    else:
+        host, path = "docker.io", repo.removeprefix("docker.io/")
+        if "/" not in path:
+            path = f"library/{path}"
+    if host == "docker.io":
+        token_url = (
+            f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{path}:pull"
+        )
+        api = "https://registry-1.docker.io"
+    else:
+        token_url = f"https://{host}/token?service={host}&scope=repository:{path}:pull"
+        api = f"https://{host}"
     with urllib.request.urlopen(token_url, timeout=30) as resp:
         token = json.load(resp)["token"]
     request = urllib.request.Request(
-        f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}",
+        f"{api}/v2/{path}/manifests/{tag}",
         method="HEAD",
         headers={"Authorization": f"Bearer {token}", "Accept": ACCEPT},
     )
     with urllib.request.urlopen(request, timeout=30) as resp:
         digest = resp.headers.get("Docker-Content-Digest", "")
     if not digest.startswith("sha256:"):
-        raise RuntimeError(f"no digest returned for {repo}:{tag}")
+        raise RuntimeError(f"no digest returned for {host}/{path}:{tag}")
     return digest
 
 

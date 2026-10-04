@@ -37,6 +37,7 @@ markers = [
     "multi_container: needs Docker Compose and more than one container",
     "build: runs colcon / ros2 pkg create inside the image",
     "slow: long-running; excluded from smoke runs",
+    "compares(family): pairs the test's image with an image of this family",
 ]
 
 [tool.ruff]

@@ -36,6 +36,12 @@ def spec_markers(item: pytest.Item) -> tuple[str | None, list[str]]:
     return spec_id, criteria
 
 
+def compared_family(item: pytest.Item) -> str | None:
+    """The family a test pairs with another image (`@pytest.mark.compares`), if any."""
+    marker = item.get_closest_marker("compares")
+    return marker.args[0] if marker else None
+
+
 def outcome_of(rep: pytest.TestReport) -> str | None:
     """Map a report phase to a parity outcome; None means this phase decides nothing."""
     if rep.when == "setup":
@@ -63,7 +69,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             "spec": spec_id,
             "criteria": criteria,
             "tier": params.get("tier"),
-            "family": params.get("family"),
+            "family": params.get("family") or compared_family(item),
         }
     config.stash[_META] = meta
     config.stash[_RECORDS] = {}

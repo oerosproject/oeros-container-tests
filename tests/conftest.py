@@ -17,7 +17,7 @@ import pytest
 import yaml
 
 from tests import recording
-from tests.plugins.spec_trace import RESULTS_DIR, spec_markers
+from tests.plugins.spec_trace import RESULTS_DIR, compared_family, spec_markers
 from tests.runtime import ProbeResult, Runtime
 from tools import matrix as matrixmod
 from tools import specs as specmod
@@ -135,7 +135,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         matrix.entry(tier)  # fail collection on a tier the matrix does not define
 
     if names == ["tier", "family"]:
-        cells = [(t, f) for t in tiers for f in FAMILIES]
+        cells = [(t, f) for t in tiers for f in matrix.families(t)]
         metafunc.parametrize("tier,family", cells, ids=[f"{t}-{f}" for t, f in cells])
     elif names == ["tier"]:
         metafunc.parametrize("tier", tiers)
@@ -161,6 +161,15 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             dropped.append(item)
             continue
         kept.append(item)
+        report_only = params.get("family") in matrixmod.REPORT_ONLY_FAMILIES or (
+            compared_family(item) in matrixmod.REPORT_ONLY_FAMILIES
+        )
+        if report_only:
+            item.add_marker(
+                pytest.mark.xfail(
+                    strict=False, reason="report only: a difference does not fail the run"
+                )
+            )
         if params.get("family") == "oeros":
             for gap in gaps:
                 if (

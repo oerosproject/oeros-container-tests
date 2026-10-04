@@ -15,7 +15,11 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-FAMILIES = ("osrf", "oeros")
+FAMILIES = ("osrf", "oeros", "sloretz")
+# Pulled from another publisher and pinned by digest, like the OSRF reference.
+EXTERNAL_FAMILIES = ("osrf", "sloretz")
+# Their failures are recorded as differences and do not fail the run (they are not ours to fix).
+REPORT_ONLY_FAMILIES = ("sloretz",)
 ARCHES = ("amd64", "arm64")
 
 
@@ -49,6 +53,10 @@ class Matrix:
     def known_tiers(self) -> list[str]:
         return [*self.tiers, *self.extra_tiers]
 
+    def families(self, tier: str) -> list[str]:
+        """The families that publish an image for `tier` (sloretz has no dev image)."""
+        return [f for f in FAMILIES if f in self.entry(tier)]
+
     def arches(self, tier: str) -> list[str]:
         """Architectures the oeros image of `tier` is published for (images.yaml `arches`)."""
         return list(self.entry(tier)["oeros"].get("arches", ARCHES))
@@ -76,14 +84,16 @@ def image_ref(
 ) -> str:
     """Return the pullable reference for one cell of the matrix."""
     env = os.environ if env is None else env
+    if family not in matrix.families(tier):
+        raise MatrixError(f"{family} publishes no image for tier {tier!r}")
     entry = matrix.entry(tier)[family]
-    if family == "osrf":
+    if family in EXTERNAL_FAMILIES:
         digest = entry.get("digest") or ""
         if digest:
             return f"{entry['repo']}@{digest}"
         if env.get("REQUIRE_PINNED_DIGESTS") == "1":
             raise MatrixError(
-                f"osrf {tier} ({entry['repo']}:{entry['tag']}) has no digest and "
+                f"{family} {tier} ({entry['repo']}:{entry['tag']}) has no digest and "
                 "REQUIRE_PINNED_DIGESTS=1; run the refresh-digests workflow"
             )
         return f"{entry['repo']}:{entry['tag']}"
@@ -134,7 +144,7 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(_github_matrix(matrix, args.tiers, args.arches)))
         else:
             for tier in args.tier or matrix.known_tiers:
-                for family in FAMILIES:
+                for family in matrix.families(tier):
                     ref = image_ref(matrix, family, tier, arch=args.arch)
                     print(f"{tier:13} {family:6} {ref}")
     except MatrixError as exc:
