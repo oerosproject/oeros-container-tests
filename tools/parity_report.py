@@ -28,6 +28,7 @@ REFERENCE_BROKEN = "reference-broken"
 NOT_RUN = "not-run"
 NOT_APPLICABLE = "n/a"
 REPORT_ONLY = "report-only"
+DIFFERENCE = "difference"
 SEVERITY = [REFERENCE_BROKEN, NEW_GAP, KNOWN_GAP, NOT_RUN, PARITY]
 
 LABELS = {
@@ -37,6 +38,7 @@ LABELS = {
     REFERENCE_BROKEN: ("🛑", "reference broken"),
     NOT_RUN: ("⚪", "not run"),
     REPORT_ONLY: ("📋", "report only"),
+    DIFFERENCE: ("🔀", "differs from OSRF"),
     NOT_APPLICABLE: ("—", "not applicable"),
 }
 
@@ -63,13 +65,27 @@ def cross_state(outcomes: list[str]) -> str:
     return PARITY if outcomes and all(o == "passed" for o in outcomes) else NOT_RUN
 
 
-def load_inventory(dirs: list[Path]) -> dict[str, dict]:
-    """PS-013 difference artifacts, keyed by tier (results/<run>/artifacts/<tier>-both-<arch>/)."""
-    out: dict[str, dict] = {}
+def difference_state(reference: list[str], candidate: list[str]) -> str:
+    """A report-only family (sloretz) against the OSRF reference for one criterion."""
+    if not candidate:
+        return NOT_RUN
+    if any(o in FAILING for o in reference):
+        return REFERENCE_BROKEN
+    if all(o in ("passed", "xpassed") for o in candidate):
+        return PARITY
+    if all(o == "skipped" for o in candidate):
+        return NOT_RUN
+    return DIFFERENCE
+
+
+def load_inventory(dirs: list[Path]) -> dict[tuple[str, str], dict]:
+    """PS-013 difference artifacts keyed by (tier, family): artifacts/<tier>-both-<arch>/."""
+    out: dict[tuple[str, str], dict] = {}
     for directory in dirs:
-        for path in sorted(directory.glob("artifacts/*-both-*/inventory-diff.json")):
+        for path in sorted(directory.glob("artifacts/*-both-*/inventory-diff-*.json")):
             tier = path.parent.name.rsplit("-both-", 1)[0]
-            out[tier] = json.loads(path.read_text())
+            family = path.stem.removeprefix("inventory-diff-")
+            out[(tier, family)] = json.loads(path.read_text())
     return out
 
 
@@ -90,7 +106,9 @@ def criterion_state(osrf: list[str], oeros: list[str]) -> str:
 
 def build(records: list[dict], specs: dict[str, specmod.Spec], matrix: matrixmod.Matrix):
     """Return (cells, details): cells[(spec, tier)] = state, details = per-criterion rows."""
-    by_criterion: dict[tuple, dict[str, list[str]]] = defaultdict(lambda: {"osrf": [], "oeros": []})
+    by_criterion: dict[tuple, dict[str, list[str]]] = defaultdict(
+        lambda: {"osrf": [], "oeros": [], "sloretz": []}
+    )
     reasons: dict[tuple, list[str]] = defaultdict(list)
     both: dict[tuple[str, str], list[str]] = defaultdict(list)
     cross: dict[tuple, list[str]] = defaultdict(list)
@@ -107,11 +125,18 @@ def build(records: list[dict], specs: dict[str, specmod.Spec], matrix: matrixmod
             continue
         key = (rec["spec"], rec["tier"], rec["criterion"])
         by_criterion[key][rec["family"]].append(rec["outcome"])
-        if rec.get("reason") and rec["family"] == "oeros":
-            reasons[key].append(rec["reason"])
+        if rec.get("reason") and rec["family"] in ("oeros", "sloretz"):
+            reasons[(rec["family"], *key)].append(rec["reason"])
 
     criterion_states = {
-        key: criterion_state(o["osrf"], o["oeros"]) for key, o in by_criterion.items()
+        key: criterion_state(o["osrf"], o["oeros"])
+        for key, o in by_criterion.items()
+        if o["osrf"] or o["oeros"]
+    }
+    sloretz_states = {
+        key: difference_state(o["osrf"], o["sloretz"])
+        for key, o in by_criterion.items()
+        if o["sloretz"]
     }
     for key, outcomes in cross.items():
         criterion_states[key] = cross_state(outcomes)
@@ -141,13 +166,15 @@ def build(records: list[dict], specs: dict[str, specmod.Spec], matrix: matrixmod
 
     details = [
         {
+            "family": family,
             "spec": sid,
             "tier": tier,
             "criterion": ac,
             "state": state,
-            "reason": "; ".join(reasons[(sid, tier, ac)]),
+            "reason": "; ".join(reasons[(family, sid, tier, ac)]),
         }
-        for (sid, tier, ac), state in sorted(criterion_states.items())
+        for family, states in (("oeros", criterion_states), ("sloretz", sloretz_states))
+        for (sid, tier, ac), state in sorted(states.items())
         if state not in (PARITY, NOT_RUN)
     ]
     return cells, details
@@ -179,28 +206,31 @@ def to_markdown(cells, details, specs, matrix, inventory=None) -> str:
         lines += [
             "### Differences",
             "",
-            "| Spec | Criterion | Tier | State | Note |",
-            "| --- | --- | --- | --- | --- |",
+            "| Family | Spec | Criterion | Tier | State | Note |",
+            "| --- | --- | --- | --- | --- | --- |",
         ]
         for d in details:
             icon, name = LABELS[d["state"]]
             lines.append(
-                f"| {d['spec']} | {d['criterion']} | {d['tier']} | {icon} {name} | {d['reason']} |"
+                f"| {d['family']} | {d['spec']} | {d['criterion']} | {d['tier']} "
+                f"| {icon} {name} | {d['reason']} |"
             )
         lines.append("")
     if inventory:
         lines += [
             "### Inventory differences (PS-013, report only)",
             "",
-            "| Tier | Set | OSRF | oeros | Only OSRF | Only oeros | Intended |",
-            "| --- | --- | --- | --- | --- | --- | --- |",
+            "| Tier | Family | Set | OSRF | Family count | Only OSRF | Only family | Intended |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
         for tier in matrix.known_tiers:
-            for kind, d in (inventory.get(tier) or {}).items():
-                lines.append(
-                    f"| {tier} | {kind} | {d['osrf_count']} | {d['oeros_count']} "
-                    f"| {len(d['only_osrf'])} | {len(d['only_oeros'])} | {len(d['intended'])} |"
-                )
+            for family in matrixmod.FAMILIES:
+                for kind, d in (inventory.get((tier, family)) or {}).items():
+                    lines.append(
+                        f"| {tier} | {family} | {kind} | {d['reference_count']} "
+                        f"| {d['candidate_count']} | {len(d['only_reference'])} "
+                        f"| {len(d['only_candidate'])} | {len(d['intended'])} |"
+                    )
         lines.append("")
     return "\n".join(lines)
 
@@ -219,17 +249,20 @@ def to_html(cells, details, specs, matrix, inventory=None) -> str:
             f"<tr><th>{html.escape(spec.id)} {html.escape(spec.title)}</th>{''.join(tds)}</tr>"
         )
     detail_rows = "".join(
-        f"<tr><td>{d['spec']}</td><td>{d['criterion']}</td><td>{d['tier']}</td>"
-        f"<td>{LABELS[d['state']][1]}</td><td>{html.escape(d['reason'])}</td></tr>"
+        f"<tr><td>{d['family']}</td><td>{d['spec']}</td><td>{d['criterion']}</td>"
+        f"<td>{d['tier']}</td><td>{LABELS[d['state']][1]}</td>"
+        f"<td>{html.escape(d['reason'])}</td></tr>"
         for d in details
     )
     inv_rows = "".join(
-        f"<tr><td>{tier}</td><td>{kind}</td><td>{d['osrf_count']}</td><td>{d['oeros_count']}</td>"
-        f'<td title="{html.escape(", ".join(d["only_osrf"]))}">{len(d["only_osrf"])}</td>'
-        f'<td title="{html.escape(", ".join(d["only_oeros"]))}">{len(d["only_oeros"])}</td>'
+        f"<tr><td>{tier}</td><td>{family}</td><td>{kind}</td><td>{d['reference_count']}</td>"
+        f"<td>{d['candidate_count']}</td>"
+        f'<td title="{html.escape(", ".join(d["only_reference"]))}">{len(d["only_reference"])}</td>'
+        f'<td title="{html.escape(", ".join(d["only_candidate"]))}">{len(d["only_candidate"])}</td>'
         f"<td>{len(d['intended'])}</td></tr>"
         for tier in matrix.known_tiers
-        for kind, d in ((inventory or {}).get(tier) or {}).items()
+        for family in matrixmod.FAMILIES
+        for kind, d in ((inventory or {}).get((tier, family)) or {}).items()
     )
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Container parity matrix</title>
@@ -244,10 +277,10 @@ th, td {{ border: 1px solid #8886; padding: .35rem .6rem; text-align: left; }}
 <h1>Container parity matrix</h1>
 <table><thead><tr><th>Spec</th>{head}</tr></thead><tbody>{"".join(rows)}</tbody></table>
 <h2>Differences</h2>
-<table><thead><tr><th>Spec</th><th>Criterion</th><th>Tier</th><th>State</th><th>Note</th></tr></thead>
+<table><thead><tr><th>Family</th><th>Spec</th><th>Criterion</th><th>Tier</th><th>State</th><th>Note</th></tr></thead>
 <tbody>{detail_rows}</tbody></table>
 <h2>Inventory differences (PS-013, report only)</h2>
-<table><thead><tr><th>Tier</th><th>Set</th><th>OSRF</th><th>oeros</th><th>Only OSRF</th><th>Only oeros</th><th>Intended</th></tr></thead>
+<table><thead><tr><th>Tier</th><th>Family</th><th>Set</th><th>OSRF</th><th>Family count</th><th>Only OSRF</th><th>Only family</th><th>Intended</th></tr></thead>
 <tbody>{inv_rows}</tbody></table>
 </body></html>
 """
