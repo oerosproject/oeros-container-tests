@@ -297,9 +297,12 @@ These were the open questions in the first draft. All five are now decided.
 - [x] **Repository home:** standalone `oeros-container-tests` repository. meta-oeros CI calls it as a reusable workflow.
 - [x] **ros-base vs ros-dev build-tools split:** accepted as an intended difference. PS-005 and PS-006 keep the ros-dev / devcontainer pairing, and PS-013 reports the split as known, not as a gap.
 - [x] **Podman:** Docker first, podman later. Runtime-specific calls stay behind a small fixture so a podman nightly job can be added without changing the specs. Podman is not part of the initial matrix.
+- [x] **Third family, sloretz (2026-10-04):** the ros_oci_images publisher, `ghcr.io/sloretz/ros:lyrical-<tier>` for all six tiers. Pulled from GHCR and pinned by its multi-arch digest like OSRF (`tools/refresh_digests.py` covers ghcr.io). Its failures are recorded as differences and never fail the run (`matrix.REPORT_ONLY_FAMILIES`). It has no dev image, so the dev tier compares OSRF and oeros only. PS-004 AC5 and AC6 pair it with oeros in both directions; PS-013 diffs it against OSRF.
 - [x] **Leaf images (tools, ci, rviz, turtlebot3, foxglove-bridge):** they join after the six tiers are stable, meaning every spec is Verified or Gap on all tiers (after Phase 3). Most have no OSRF equivalent, so they get contract and smoke checks only, not differential parity.
 
 ## Sources
+
+- [sloretz/ros_oci_images](https://github.com/sloretz/ros_oci_images) (Apache-2.0): the sloretz image definitions, pulled as `ghcr.io/sloretz/ros`
 
 - [Docker guide: Introduction to ROS 2 Development with Docker](https://docs.docker.com/guides/ros2/)
 - [Running ROS 2 nodes in Docker](https://github.com/ros2/ros2_documentation/blob/lyrical/source/Developer-Tools/Build/Run-2-nodes-in-single-or-separate-docker-containers.rst)

@@ -87,11 +87,11 @@ def shell_command(step: dict) -> str:
     return " ".join([*(shlex.quote(p) for p in parts), '"$IMAGE"', *map(shlex.quote, step["cmd"])])
 
 
-def _example_images(matrix: matrixmod.Matrix, tiers: list[str]) -> list[tuple[str, str, str]]:
-    """(tier, osrf ref, oeros ref) for each tier, from images.yaml (tags, not digests).
+def _example_images(matrix: matrixmod.Matrix, tiers: list[str]) -> list[tuple[str, str, str, str]]:
+    """(tier, osrf ref, oeros ref, sloretz ref) for each tier, from images.yaml (tags, not digests).
 
     The oeros ref is the amd64 one; arm64 uses the same repository with a lyrical-arm64 tag
-    (see tools/matrix.py:oeros_name).
+    (see tools/matrix.py:oeros_name). A tier without a sloretz image shows a dash.
     """
     rows = []
     for tier in tiers:
@@ -99,7 +99,9 @@ def _example_images(matrix: matrixmod.Matrix, tiers: list[str]) -> list[tuple[st
         osrf = f"{entry['osrf']['repo']}:{entry['osrf']['tag']}"
         name = matrixmod.oeros_name(entry["oeros"], matrix.defaults["oeros_tag"], "amd64")
         oeros = f"{matrix.defaults['oeros_registry']}/{name}"
-        rows.append((tier, osrf, oeros))
+        sloretz = entry.get("sloretz")
+        sloretz_ref = f"{sloretz['repo']}:{sloretz['tag']}" if sloretz else "—"
+        rows.append((tier, osrf, oeros, sloretz_ref))
     return rows
 
 
@@ -116,13 +118,13 @@ def render(spec: specmod.Spec, entry: dict, matrix: matrixmod.Matrix) -> str:
         "",
         "Run every step once with the OSRF image and once with the oeros image, and compare the "
         "results. Set `IMAGE` to the image under test. The pairs for this spec's tiers are below "
-        "(the suite pins the OSRF ones by digest):",
+        "(the suite pins the OSRF and sloretz ones by digest):",
         "",
-        "| Tier | OSRF image | oeros image |",
-        "| --- | --- | --- |",
+        "| Tier | OSRF image | oeros image | sloretz image |",
+        "| --- | --- | --- | --- |",
         *[
-            f"| `{t}` | `{o}` | `{e}` |"
-            for t, o, e in _example_images(matrix, spec.applicable_tiers(matrix))
+            f"| `{t}` | `{o}` | `{e}` | {s if s == '—' else f'`{s}`'} |"
+            for t, o, e, s in _example_images(matrix, spec.applicable_tiers(matrix))
         ],
         "",
         "```sh",

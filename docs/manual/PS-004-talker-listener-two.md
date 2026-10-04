@@ -79,3 +79,33 @@ docker compose -p oeros-interop -f compose/interop.yaml down -v -t 1
 Expected: **AC4**: 3 or more.
 
 Point `OSRF_IMAGE` and `OEROS_IMAGE` at the same tier before AC3 and AC4.
+
+## AC5 and AC6: sloretz with oeros
+
+These pair the oeros image with the sloretz image (`ghcr.io/sloretz/ros:lyrical-<tier>`, see the
+table in the [README](README.md)). Both are reported as differences: a failure here is recorded
+in the parity report but does not fail the run.
+
+```sh
+export SLORETZ_IMAGE=ghcr.io/sloretz/ros:lyrical-desktop   # the tier you are testing
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export TALKER_IMAGE=$OEROS_IMAGE LISTENER_IMAGE=$SLORETZ_IMAGE
+docker compose -p oeros-sloretz -f compose/interop.yaml up -d
+sleep 20
+docker compose -p oeros-sloretz -f compose/interop.yaml logs listener | grep -c "I heard"
+docker compose -p oeros-sloretz -f compose/interop.yaml down -v -t 1
+```
+
+Expected: **AC5**: 3 or more.
+
+Swap the two variables for AC6:
+
+```sh
+export TALKER_IMAGE=$SLORETZ_IMAGE LISTENER_IMAGE=$OEROS_IMAGE
+docker compose -p oeros-sloretz -f compose/interop.yaml up -d
+sleep 20
+docker compose -p oeros-sloretz -f compose/interop.yaml logs listener | grep -c "I heard"
+docker compose -p oeros-sloretz -f compose/interop.yaml down -v -t 1
+```
+
+Expected: **AC6**: 3 or more.

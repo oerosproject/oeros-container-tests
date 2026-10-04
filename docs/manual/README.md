@@ -12,17 +12,22 @@ parity spec (`specs/PS-*.md`) and every step is tagged with the acceptance crite
 
 ## Setup
 
-Run each guide twice, once per image family, and compare. The pairs come from
+Run each guide once per image family and compare: OSRF and oeros are the reference and
+candidate, and sloretz (the `ros_oci_images` publisher) is a third image compared against them,
+where a difference is reported rather than failing the run. The pairs come from
 [`images.yaml`](../../images.yaml); the oeros column is the amd64 name (see below for arm64):
 
-| Tier | OSRF image | oeros image (amd64) |
-| --- | --- | --- |
-| `ros-core` | `docker.io/library/ros:lyrical-ros-core` | `ghcr.io/oerosproject/oeros-ros-core:lyrical-amd64` |
-| `ros-base` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-ros-base:lyrical-amd64` |
-| `perception` | `docker.io/library/ros:lyrical-perception` | `ghcr.io/oerosproject/desktop/oeros-perception:lyrical-amd64` |
-| `simulation` | `docker.io/osrf/ros:lyrical-simulation` | `ghcr.io/oerosproject/desktop/oeros-simulation:lyrical-amd64` |
-| `desktop` | `docker.io/library/ros:lyrical-desktop` | `ghcr.io/oerosproject/desktop/oeros-desktop:lyrical-amd64` |
-| `desktop-full` | `docker.io/osrf/ros:lyrical-desktop-full` | `ghcr.io/oerosproject/desktop/oeros-desktop-full:lyrical-amd64` |
+| Tier | OSRF image | oeros image (amd64) | sloretz image |
+| --- | --- | --- | --- |
+| `ros-core` | `docker.io/library/ros:lyrical-ros-core` | `ghcr.io/oerosproject/oeros-ros-core:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-ros-core` |
+| `ros-base` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-ros-base:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-ros-base` |
+| `perception` | `docker.io/library/ros:lyrical-perception` | `ghcr.io/oerosproject/desktop/oeros-perception:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-perception` |
+| `simulation` | `docker.io/osrf/ros:lyrical-simulation` | `ghcr.io/oerosproject/desktop/oeros-simulation:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-simulation` |
+| `desktop` | `docker.io/library/ros:lyrical-desktop` | `ghcr.io/oerosproject/desktop/oeros-desktop:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-desktop` |
+| `desktop-full` | `docker.io/osrf/ros:lyrical-desktop-full` | `ghcr.io/oerosproject/desktop/oeros-desktop-full:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-desktop-full` |
+
+The sloretz images are multi-architecture under one tag, so use the same tag on both
+architectures; there is no `dev` tier for sloretz.
 
 `images.yaml` is the source of truth (the suite also pins the OSRF images by digest); check it
 if this table looks out of date. oeros images are `<repository>:lyrical-<arch>`: the tag names the
@@ -35,7 +40,8 @@ Locally built oeros images get the same name, with no registry prefix, after
 ```sh
 export OSRF_IMAGE=docker.io/library/ros:lyrical-desktop
 export OEROS_IMAGE=ghcr.io/oerosproject/desktop/oeros-desktop:lyrical-amd64   # lyrical-arm64 on arm64
-IMAGE=$OSRF_IMAGE    # then repeat the guide with IMAGE=$OEROS_IMAGE
+export SLORETZ_IMAGE=ghcr.io/sloretz/ros:lyrical-desktop
+IMAGE=$OSRF_IMAGE    # then repeat the guide with IMAGE=$OEROS_IMAGE and IMAGE=$SLORETZ_IMAGE
 ```
 
 With rootless podman, use `podman` for `docker` (and `podman-compose` for `docker compose`).

@@ -7,16 +7,16 @@ Spec: [`PS-013-inventory.md`](../../specs/PS-013-inventory.md). Source: `all sou
 
 ## Before you start
 
-Run every step once with the OSRF image and once with the oeros image, and compare the results. Set `IMAGE` to the image under test. The pairs for this spec's tiers are below (the suite pins the OSRF ones by digest):
+Run every step once with the OSRF image and once with the oeros image, and compare the results. Set `IMAGE` to the image under test. The pairs for this spec's tiers are below (the suite pins the OSRF and sloretz ones by digest):
 
-| Tier | OSRF image | oeros image |
-| --- | --- | --- |
-| `ros-core` | `docker.io/library/ros:lyrical-ros-core` | `ghcr.io/oerosproject/oeros-ros-core:lyrical-amd64` |
-| `ros-base` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-ros-base:lyrical-amd64` |
-| `perception` | `docker.io/library/ros:lyrical-perception` | `ghcr.io/oerosproject/desktop/oeros-perception:lyrical-amd64` |
-| `simulation` | `docker.io/osrf/ros:lyrical-simulation` | `ghcr.io/oerosproject/desktop/oeros-simulation:lyrical-amd64` |
-| `desktop` | `docker.io/osrf/ros:lyrical-desktop` | `ghcr.io/oerosproject/desktop/oeros-desktop:lyrical-amd64` |
-| `desktop-full` | `docker.io/osrf/ros:lyrical-desktop-full` | `ghcr.io/oerosproject/desktop/oeros-desktop-full:lyrical-amd64` |
+| Tier | OSRF image | oeros image | sloretz image |
+| --- | --- | --- | --- |
+| `ros-core` | `docker.io/library/ros:lyrical-ros-core` | `ghcr.io/oerosproject/oeros-ros-core:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-ros-core` |
+| `ros-base` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-ros-base:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-ros-base` |
+| `perception` | `docker.io/library/ros:lyrical-perception` | `ghcr.io/oerosproject/desktop/oeros-perception:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-perception` |
+| `simulation` | `docker.io/osrf/ros:lyrical-simulation` | `ghcr.io/oerosproject/desktop/oeros-simulation:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-simulation` |
+| `desktop` | `docker.io/osrf/ros:lyrical-desktop` | `ghcr.io/oerosproject/desktop/oeros-desktop:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-desktop` |
+| `desktop-full` | `docker.io/osrf/ros:lyrical-desktop-full` | `ghcr.io/oerosproject/desktop/oeros-desktop-full:lyrical-amd64` | `ghcr.io/sloretz/ros:lyrical-desktop-full` |
 
 ```sh
 IMAGE=<one of the images above>

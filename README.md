@@ -2,6 +2,9 @@
 
 Spec-driven parity tests: do the meta-oeros ROS 2 container images (Lyrical on Yocto Wrynose)
 behave like the official OSRF / Docker Hub images? Every test runs against both image families
+(OSRF and oeros), and the sloretz images (`ghcr.io/sloretz/ros`, from
+[sloretz/ros_oci_images](https://github.com/sloretz/ros_oci_images)) are a third family whose
+differences are reported but never fail the run
 and the result is a per-tier parity matrix, not just pass/fail.
 
 The plan is in [`specs/ROS 2 Container Parity Test Plan.md`](specs/ROS%202%20Container%20Parity%20Test%20Plan.md).

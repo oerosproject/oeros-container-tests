@@ -7,11 +7,11 @@ Spec: [`PS-005-create-package.md`](../../specs/PS-005-create-package.md). Source
 
 ## Before you start
 
-Run every step once with the OSRF image and once with the oeros image, and compare the results. Set `IMAGE` to the image under test. The pairs for this spec's tiers are below (the suite pins the OSRF ones by digest):
+Run every step once with the OSRF image and once with the oeros image, and compare the results. Set `IMAGE` to the image under test. The pairs for this spec's tiers are below (the suite pins the OSRF and sloretz ones by digest):
 
-| Tier | OSRF image | oeros image |
-| --- | --- | --- |
-| `dev` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-ros-dev:lyrical-amd64` |
+| Tier | OSRF image | oeros image | sloretz image |
+| --- | --- | --- | --- |
+| `dev` | `docker.io/library/ros:lyrical-ros-base` | `ghcr.io/oerosproject/oeros-ros-dev:lyrical-amd64` | — |
 
 ```sh
 IMAGE=<one of the images above>
