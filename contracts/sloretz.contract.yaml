@@ -1,0 +1,24 @@
+# PS-012 recorded contract for the sloretz images (ghcr.io/sloretz/ros:lyrical-<tier>).
+# Recorded 2026-10-04 from ghcr.io/sloretz/ros:lyrical-ros-core (amd64). The other tiers are built
+# the same way (Earthly, from the same ros2/Earthfile), and the PS-012 tests check each one.
+# Like the OSRF reference, the image sets ROS_DISTRO and relies on /ros_entrypoint.sh for the
+# rest. Differences from this contract are reported, not failures (matrix.REPORT_ONLY_FAMILIES).
+#
+# config:  image configuration (`inspect`), compared exactly for entrypoint, cmd, user and
+#          workdir, and as a subset for env.
+# files:   paths that must exist in the image.
+# shell:   basename of `readlink -f /bin/sh` (the default shell).
+config:
+  entrypoint: [/ros_entrypoint.sh]
+  cmd: [bash]
+  user: ""
+  workdir: ""
+  env:
+    ROS_DISTRO: lyrical
+    LANG: C.UTF-8
+files:
+  - /ros_entrypoint.sh
+  - /opt/ros/lyrical/setup.bash
+  - /opt/ros/lyrical/setup.sh
+shell: dash
+tiers: {}

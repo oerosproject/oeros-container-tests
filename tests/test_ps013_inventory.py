@@ -1,6 +1,7 @@
-"""PS-013: package inventory parity. Report-only: passes when both sets were captured.
+"""PS-013: package inventory parity. Report-only: passes when every set was captured.
 
-Runs once per tier and probes both families itself, so it is not parametrized by family.
+Runs once per tier and probes every family the tier publishes, so it is not parametrized by
+family. OSRF is the reference; each other family is diffed against it.
 """
 
 from pathlib import Path
@@ -36,8 +37,10 @@ def _capture(ros, probe) -> dict[str, list[str]]:
 
 
 @pytest.fixture
-def inventories(ros_for, probe_for):
-    return {family: _capture(ros_for(family), probe_for(family)) for family in ("osrf", "oeros")}
+def inventories(ros_for, probe_for, matrix, tier):
+    return {
+        family: _capture(ros_for(family), probe_for(family)) for family in matrix.families(tier)
+    }
 
 
 def _intended(tier: str, matrix) -> set[tuple[str, str, str]]:
@@ -57,19 +60,28 @@ def test_sets_are_captured(inventories):
             assert inventory[kind], f"{family}: empty {kind} set"
 
 
+def _diff(reference: dict, candidate: dict, family: str, intended: set) -> dict:
+    diff = {}
+    for kind in reference:
+        ref, cand = set(reference[kind]), set(candidate[kind])
+        only_ref, only_cand = sorted(ref - cand), sorted(cand - ref)
+        side_ref, side_cand = "only_osrf", f"only_{family}"
+        diff[kind] = {
+            "reference_count": len(ref),
+            "candidate_count": len(cand),
+            "only_reference": [n for n in only_ref if (kind, n, side_ref) not in intended],
+            "only_candidate": [n for n in only_cand if (kind, n, side_cand) not in intended],
+            "intended": [n for n in only_ref if (kind, n, side_ref) in intended]
+            + [n for n in only_cand if (kind, n, side_cand) in intended],
+        }
+    return diff
+
+
 @pytest.mark.spec("PS-013", "AC2")
 def test_difference_artifact(inventories, artifacts, matrix, tier):
     intended = _intended(tier, matrix)
-    diff = {}
-    for kind in inventories["osrf"]:
-        osrf, oeros = set(inventories["osrf"][kind]), set(inventories["oeros"][kind])
-        only_osrf, only_oeros = sorted(osrf - oeros), sorted(oeros - osrf)
-        diff[kind] = {
-            "osrf_count": len(osrf),
-            "oeros_count": len(oeros),
-            "only_osrf": [n for n in only_osrf if (kind, n, "only_osrf") not in intended],
-            "only_oeros": [n for n in only_oeros if (kind, n, "only_oeros") not in intended],
-            "intended": [n for n in only_osrf if (kind, n, "only_osrf") in intended]
-            + [n for n in only_oeros if (kind, n, "only_oeros") in intended],
-        }
-    artifacts("inventory-diff", diff)
+    for family, inventory in inventories.items():
+        if family != "osrf":
+            artifacts(
+                f"inventory-diff-{family}", _diff(inventories["osrf"], inventory, family, intended)
+            )

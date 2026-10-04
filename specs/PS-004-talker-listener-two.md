@@ -18,5 +18,7 @@ AC1: with `docker run` on a shared network, the listener receives 3 or more mess
 AC2: with `compose/talker-listener.yaml`, the listener receives 3 or more messages within 15 s
 AC3: an oeros talker and an OSRF listener work together (compose/interop.yaml)
 AC4: an OSRF talker and an oeros listener work together (compose/interop.yaml)
+AC5: an oeros talker and a sloretz listener work together (difference only: a failure is reported, not a run failure)
+AC6: a sloretz talker and an oeros listener work together (difference only: a failure is reported, not a run failure)
 
 Out of scope: interactive `-it` sessions, multi-host networks.

@@ -1,6 +1,6 @@
 """PS-004: talker and listener in two containers. Desktop tiers.
 
-AC1 and AC2 run per family. AC3 and AC4 pair the two families, so they run once per tier and
+AC1 and AC2 run per family. AC3 to AC6 pair two images, so they run once per tier and
 probe both images themselves. Cross-family runs pin the middleware explicitly, because the two
 families may default to different implementations (PS-001 records each default).
 """
@@ -90,4 +90,22 @@ def test_oeros_talker_osrf_listener(scenario, image_for):
 def test_osrf_talker_oeros_listener(scenario, image_for):
     env = {**_env(), "RMW_IMPLEMENTATION": INTEROP_RMW}
     talker, listener = _pair(scenario, image_for("osrf"), image_for("oeros"), env)
+    _assert_heard(scenario, talker, listener)
+
+
+@pytest.mark.spec("PS-004", "AC5")
+@pytest.mark.multi_container
+@pytest.mark.compares("sloretz")
+def test_oeros_talker_sloretz_listener(scenario, image_for):
+    env = {**_env(), "RMW_IMPLEMENTATION": INTEROP_RMW}
+    talker, listener = _pair(scenario, image_for("oeros"), image_for("sloretz"), env)
+    _assert_heard(scenario, talker, listener)
+
+
+@pytest.mark.spec("PS-004", "AC6")
+@pytest.mark.multi_container
+@pytest.mark.compares("sloretz")
+def test_sloretz_talker_oeros_listener(scenario, image_for):
+    env = {**_env(), "RMW_IMPLEMENTATION": INTEROP_RMW}
+    talker, listener = _pair(scenario, image_for("sloretz"), image_for("oeros"), env)
     _assert_heard(scenario, talker, listener)
