@@ -36,15 +36,15 @@ defaults:
 # The six REP-2001 tiers. `tiers: [all]` in a spec's front matter means these.
 tiers:
   ros-core:
-    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-core, digest: "sha256:08e9177b56033fb370f572be88ad61d9682b84067086a943fb6960fa2088f530"}
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-core, digest: "sha256:6c178598874dd141d2757390591744e089ee49ad046eb14b74e6017704eddb05"}
     oeros: {image: oeros-container-ros-core, repository: oeros-ros-core}
     sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-ros-core, digest: "sha256:38f665b0ece01d1ab1c9dbf492bcd5ce5e7f26912cdedf4dd127118ca3ce28f9"}
   ros-base:
-    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-base, digest: "sha256:0c19f326a339ed770ef1d4c0646a8b53bdb49dd5ff74b6de41ebdb8ac21e1806"}
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-base, digest: "sha256:f79cd486fa218596747c45d00ca42101b0303fc6d94ed5adb72145cd6f54b86c"}
     oeros: {image: oeros-container-ros-base, repository: oeros-ros-base}
     sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-ros-base, digest: "sha256:237a58b5ff86a9a392dcf1f9a795e7e0429b3ed363a6b69c9efd3243a2bc3c06"}
   perception:
-    osrf:  {repo: docker.io/library/ros, tag: lyrical-perception, digest: "sha256:b3268d03ff1b9069627d215cdac870f83faad2425d17ce0d8d56a65c15b878b6"}
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-perception, digest: "sha256:63387fcddde3142eca0205a6153e96331bb789027016a2f66aeab8ac0a5d79ef"}
     oeros: {image: oeros-container-perception, repository: oeros-perception, namespace: desktop/}
     sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-perception, digest: "sha256:cf21a0b6e145d6c86db3fd5a907688d3859edc897ceb4d989964dbbf69281770"}
   simulation:
@@ -65,5 +65,5 @@ tiers:
 # front matter tiers.
 extra_tiers:
   dev:
-    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-base, digest: "sha256:0c19f326a339ed770ef1d4c0646a8b53bdb49dd5ff74b6de41ebdb8ac21e1806"}
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-base, digest: "sha256:f79cd486fa218596747c45d00ca42101b0303fc6d94ed5adb72145cd6f54b86c"}
     oeros: {image: oeros-container-ros-dev, repository: oeros-ros-dev}
