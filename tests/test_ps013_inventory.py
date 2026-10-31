@@ -64,7 +64,9 @@ def test_sets_are_captured(inventories):
             assert inventory[kind], f"{family}: empty {kind} set"
 
 
-def _diff(reference: dict, candidate: dict, reference_name: str, family: str, intended: set) -> dict:
+def _diff(
+    reference: dict, candidate: dict, reference_name: str, family: str, intended: set
+) -> dict:
     diff = {}
     for kind in reference:
         ref, cand = set(reference[kind]), set(candidate[kind])
