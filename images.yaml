@@ -24,6 +24,15 @@
 #          covers both architectures and there is no arch-specific tag. Its failures are
 #          differences, not run failures (matrix.REPORT_ONLY_FAMILIES). It has no dev image.
 #
+# <family>_arches (optional, sibling of the family's own mapping, default both): architectures
+# that family actually publishes for the tier. osrf/ros has no arm64 build of simulation,
+# desktop or desktop-full (docker.io/osrf/ros's manifest list for those tags is amd64-only) --
+# a permanent gap, not flakiness, so tools/matrix.py:reference_family() falls back to sloretz
+# as the required reference for that arch instead of failing the run on a doomed osrf pull
+# (REFERENCE_FALLBACK). This sits outside the osrf/sloretz one-line dicts rather than inside
+# them, below, so refresh_digests.py's regex (which expects exactly
+# {repo: ..., tag: ..., digest: "..."}) keeps matching them untouched.
+#
 # Keep each osrf and sloretz entry on one line: tools/refresh_digests.py edits the `digest`
 # field in place.
 
@@ -49,14 +58,17 @@ tiers:
     sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-perception, digest: "sha256:cf21a0b6e145d6c86db3fd5a907688d3859edc897ceb4d989964dbbf69281770"}
   simulation:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-simulation, digest: "sha256:e4a9a9a8f14dc509563f8d0786452e2982ac70f4132e5432e5986e6005e1b8ba"}
+    osrf_arches: [amd64]  # no arm64 build; falls back to sloretz, see the note above
     oeros: {image: oeros-container-simulation, repository: oeros-simulation, namespace: desktop/}
     sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-simulation, digest: "sha256:79aaf7eebc78f6baf42b7a2062590fc20012c0d116515b4b5fbbcbe41fc00bce"}
   desktop:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-desktop, digest: "sha256:cd0f24da968e3a7e8d0ef76b8d3684483235c86f5ab6a69ca2d4c9d7368a71f7"}
+    osrf_arches: [amd64]  # no arm64 build; falls back to sloretz, see the note above
     oeros: {image: oeros-container-desktop, repository: oeros-desktop, namespace: desktop/}
     sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-desktop, digest: "sha256:837c00bbc9307c738646fc70ef495260d9430d42bc352e4e6d014d81fb065d6c"}
   desktop-full:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-desktop-full, digest: "sha256:12f03ad224f4f7801c4eeb320934b198fe0b9536d70f2f617894da08ca3bedba"}
+    osrf_arches: [amd64]  # no arm64 build; falls back to sloretz, see the note above
     oeros: {image: oeros-container-desktop-full, repository: oeros-desktop-full, namespace: desktop/}
     sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-desktop-full, digest: "sha256:a7e5d079f0f1831947f5e1461c05e5f0d37d6f81d4f76ceb9e57be72d064107a"}
 

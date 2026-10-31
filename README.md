@@ -89,6 +89,10 @@ tools/          spec_lint, parity_report, matrix, load_oeros, refresh_digests, g
 - **Pass rules.** A run fails on any unexpected failure, any strict XPASS, or any OSRF failure
   (a broken reference means a broken test). To record a known gap, add it to `gaps.yaml` with
   its meta-oeros issue; when the fix lands the strict XPASS fails the run and the entry goes.
+  Where osrf has no image for a tier/arch at all (`images.yaml` `osrf_arches`, e.g. arm64 for
+  `simulation`/`desktop`/`desktop-full` -- osrf/ros never publishes those) this applies to
+  sloretz instead (`tools/matrix.py:reference_family`): that cell is skipped for osrf, and
+  sloretz stops being report-only and must pass like osrf would.
 - **Spec lifecycle.** Draft, then Approved (every criterion needs a test and a pinned
   `source_sha`, enforced by `spec-lint`), Implemented, Verified or Gap.
 - **Matrix cell states:** parity met, known gap, new gap, reference broken, report only

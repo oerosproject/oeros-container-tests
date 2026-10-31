@@ -135,7 +135,8 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         matrix.entry(tier)  # fail collection on a tier the matrix does not define
 
     if names == ["tier", "family"]:
-        cells = [(t, f) for t in tiers for f in matrix.families(t)]
+        arch = metafunc.config.getoption("--arch")
+        cells = [(t, f) for t in tiers for f in matrix.families(t, arch)]
         metafunc.parametrize("tier,family", cells, ids=[f"{t}-{f}" for t, f in cells])
     elif names == ["tier"]:
         metafunc.parametrize("tier", tiers)
@@ -147,6 +148,8 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     want_tiers = config.getoption("--tier")
     want_families = config.getoption("--family")
     want_specs = config.getoption("--spec")
+    arch = config.getoption("--arch")
+    matrix = matrixmod.load(ROOT / "images.yaml")
     gaps = _load_gaps()
 
     kept, dropped = [], []
@@ -161,8 +164,18 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             dropped.append(item)
             continue
         kept.append(item)
-        report_only = params.get("family") in matrixmod.REPORT_ONLY_FAMILIES or (
-            compared_family(item) in matrixmod.REPORT_ONLY_FAMILIES
+        family, tier = params.get("family"), params.get("tier")
+        # Normally only sloretz is report-only; but when osrf has no image for this tier/arch
+        # (images.yaml `osrf_arches`), sloretz stands in as the required reference instead
+        # (matrix.reference_family) and must fail the run like osrf would.
+        is_fallback_reference = (
+            family in matrixmod.REPORT_ONLY_FAMILIES
+            and tier in matrix.known_tiers
+            and matrix.reference_family(tier, arch) == family
+        )
+        report_only = not is_fallback_reference and (
+            family in matrixmod.REPORT_ONLY_FAMILIES
+            or compared_family(item) in matrixmod.REPORT_ONLY_FAMILIES
         )
         if report_only:
             item.add_marker(

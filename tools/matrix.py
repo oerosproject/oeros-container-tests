@@ -20,6 +20,10 @@ FAMILIES = ("osrf", "oeros", "sloretz")
 EXTERNAL_FAMILIES = ("osrf", "sloretz")
 # Their failures are recorded as differences and do not fail the run (they are not ours to fix).
 REPORT_ONLY_FAMILIES = ("sloretz",)
+# When the key has no image for a tier/arch (images.yaml `<family>_arches`), the value stands
+# in as the required reference instead (reference_family()). A permanent gap, not flakiness:
+# see the images.yaml note by `osrf_arches`.
+REFERENCE_FALLBACK = {"osrf": "sloretz"}
 ARCHES = ("amd64", "arm64")
 
 
@@ -53,13 +57,47 @@ class Matrix:
     def known_tiers(self) -> list[str]:
         return [*self.tiers, *self.extra_tiers]
 
-    def families(self, tier: str) -> list[str]:
-        """The families that publish an image for `tier` (sloretz has no dev image)."""
-        return [f for f in FAMILIES if f in self.entry(tier)]
+    def families(self, tier: str, arch: str | None = None) -> list[str]:
+        """The families that publish an image for `tier` (sloretz has no dev image).
+
+        With `arch`, drop a family that does not publish for it (images.yaml `<family>_arches`),
+        for example osrf on arm64 for the desktop tiers.
+        """
+        names = [f for f in FAMILIES if f in self.entry(tier)]
+        if arch is None:
+            return names
+        return [f for f in names if arch in self.family_arches(tier, f)]
 
     def arches(self, tier: str) -> list[str]:
         """Architectures the oeros image of `tier` is published for (images.yaml `arches`)."""
-        return list(self.entry(tier)["oeros"].get("arches", ARCHES))
+        return self.family_arches(tier, "oeros")
+
+    def family_arches(self, tier: str, family: str) -> list[str]:
+        """Architectures `family` is published for, for `tier`; default is both.
+
+        oeros keeps this inside its own mapping (`arches:`); osrf and sloretz are one-line
+        dicts tools/refresh_digests.py rewrites in place, so theirs is a sibling
+        `<family>_arches` key instead, to keep that dict's shape exactly `{repo, tag, digest}`.
+        """
+        entry = self.entry(tier)
+        if family == "oeros":
+            return list(entry["oeros"].get("arches", ARCHES))
+        return list(entry.get(f"{family}_arches", ARCHES))
+
+    def reference_family(self, tier: str, arch: str) -> str:
+        """The external family that must pass for `tier`/`arch`.
+
+        Normally osrf; falls back along REFERENCE_FALLBACK (currently just osrf -> sloretz)
+        when osrf has no image for that arch.
+        """
+        family = "osrf"
+        seen = {family}
+        while arch not in self.family_arches(tier, family):
+            family = REFERENCE_FALLBACK.get(family)
+            if family is None or family in seen or family not in self.families(tier):
+                raise MatrixError(f"no reference family publishes {tier!r} for arch {arch!r}")
+            seen.add(family)
+        return family
 
     def entry(self, tier: str) -> dict:
         try:
@@ -144,7 +182,7 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(_github_matrix(matrix, args.tiers, args.arches)))
         else:
             for tier in args.tier or matrix.known_tiers:
-                for family in matrix.families(tier):
+                for family in matrix.families(tier, args.arch):
                     ref = image_ref(matrix, family, tier, arch=args.arch)
                     print(f"{tier:13} {family:6} {ref}")
     except MatrixError as exc:

@@ -77,9 +77,18 @@ def test_compose_pair(runtime, image):
         runtime.exec_env([*base, "down", "-v", "-t", "1"], env, timeout=300)
 
 
+def _require_osrf(matrix, tier: str, pytestconfig) -> None:
+    """Skip when osrf has no image for this tier/arch (images.yaml `osrf_arches`): AC5/AC6
+    already pair oeros with sloretz for exactly this case."""
+    arch = pytestconfig.getoption("--arch")
+    if "osrf" not in matrix.families(tier, arch):
+        pytest.skip(f"osrf has no {tier} image for {arch}; see AC5/AC6 for the sloretz pairing")
+
+
 @pytest.mark.spec("PS-004", "AC3")
 @pytest.mark.multi_container
-def test_oeros_talker_osrf_listener(scenario, image_for):
+def test_oeros_talker_osrf_listener(scenario, image_for, matrix, tier, pytestconfig):
+    _require_osrf(matrix, tier, pytestconfig)
     env = {**_env(), "RMW_IMPLEMENTATION": INTEROP_RMW}
     talker, listener = _pair(scenario, image_for("oeros"), image_for("osrf"), env)
     _assert_heard(scenario, talker, listener)
@@ -87,7 +96,8 @@ def test_oeros_talker_osrf_listener(scenario, image_for):
 
 @pytest.mark.spec("PS-004", "AC4")
 @pytest.mark.multi_container
-def test_osrf_talker_oeros_listener(scenario, image_for):
+def test_osrf_talker_oeros_listener(scenario, image_for, matrix, tier, pytestconfig):
+    _require_osrf(matrix, tier, pytestconfig)
     env = {**_env(), "RMW_IMPLEMENTATION": INTEROP_RMW}
     talker, listener = _pair(scenario, image_for("osrf"), image_for("oeros"), env)
     _assert_heard(scenario, talker, listener)
