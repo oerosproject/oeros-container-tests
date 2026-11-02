@@ -21,7 +21,8 @@ ROOT = Path(__file__).resolve().parent.parent
 IMAGES = ROOT / "images.yaml"
 
 ENTRY = re.compile(
-    r'(\{repo: (?P<repo>[^,]+), tag: (?P<tag>[^,]+), digest: ")(?P<digest>[^"]*)("\})'
+    r'(^[^#\n]*?\{repo: (?P<repo>[^,]+), tag: (?P<tag>[^,]+), digest: ")(?P<digest>[^"]*)("\})',
+    re.MULTILINE,
 )
 ACCEPT = ", ".join(
     [
