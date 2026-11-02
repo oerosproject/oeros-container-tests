@@ -31,7 +31,7 @@
 # as the required reference for that arch instead of failing the run on a doomed osrf pull
 # (REFERENCE_FALLBACK). This sits outside the osrf/sloretz one-line dicts rather than inside
 # them, below, so refresh_digests.py's regex (which expects exactly
-# {repo: ..., tag: ..., digest: "..."}) keeps matching them untouched.
+# {repo: <repo>, tag: <tag>, digest: "<digest>"}) keeps matching them untouched.
 #
 # Keep each osrf and sloretz entry on one line: tools/refresh_digests.py edits the `digest`
 # field in place.
