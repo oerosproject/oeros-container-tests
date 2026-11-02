@@ -42,6 +42,15 @@ def current_digest(repo: str, tag: str) -> str:
         host, path = "docker.io", repo.removeprefix("docker.io/")
         if "/" not in path:
             path = f"library/{path}"
+
+    print(f"DEBUG repo={repo!r} host={host!r} path={path!r} tag={tag!r}", file=sys.stderr)
+    for label in host.split("."):
+        try:
+            label.encode("idna")
+        except UnicodeError as exc:
+            print(f"DEBUG malformed IDNA label {label!r} in host {host!r}: {exc}", file=sys.stderr)
+            raise
+
     if host == "docker.io":
         token_url = (
             f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{path}:pull"
@@ -50,15 +59,20 @@ def current_digest(repo: str, tag: str) -> str:
     else:
         token_url = f"https://{host}/token?service={host}&scope=repository:{path}:pull"
         api = f"https://{host}"
-    with urllib.request.urlopen(token_url, timeout=30) as resp:
-        token = json.load(resp)["token"]
-    request = urllib.request.Request(
-        f"{api}/v2/{path}/manifests/{tag}",
-        method="HEAD",
-        headers={"Authorization": f"Bearer {token}", "Accept": ACCEPT},
-    )
-    with urllib.request.urlopen(request, timeout=30) as resp:
-        digest = resp.headers.get("Docker-Content-Digest", "")
+
+    try:
+        with urllib.request.urlopen(token_url, timeout=30) as resp:
+            token = json.load(resp)["token"]
+        request = urllib.request.Request(
+            f"{api}/v2/{path}/manifests/{tag}",
+            method="HEAD",
+            headers={"Authorization": f"Bearer {token}", "Accept": ACCEPT},
+        )
+        with urllib.request.urlopen(request, timeout=30) as resp:
+            digest = resp.headers.get("Docker-Content-Digest", "")
+    except UnicodeError:
+        print(f"DEBUG failing request for host={host!r} path={path!r} tag={tag!r}", file=sys.stderr)
+        raise
     if not digest.startswith("sha256:"):
         raise RuntimeError(f"no digest returned for {host}/{path}:{tag}")
     return digest
@@ -75,6 +89,7 @@ def main() -> int:
 
     def replace(match: re.Match) -> str:
         key = (match["repo"], match["tag"])
+        print(f"DEBUG processing image {key[0]!r}:{key[1]!r}", file=sys.stderr)
         if key not in cache:
             cache[key] = current_digest(*key)
         if match["digest"] != cache[key]:
