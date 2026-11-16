@@ -45,37 +45,37 @@ defaults:
 # The six REP-2001 tiers. `tiers: [all]` in a spec's front matter means these.
 tiers:
   ros-core:
-    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-core, digest: "sha256:9401a1727b686a34b6775b43365f3805d47472840a4041dcf0f0ee3601992047"}
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-core, digest: "sha256:748f9a572881c3af47f2f98750d57c1b548a8a3311a0e52dae8d61deff09820c"}
     oeros: {image: oeros-container-ros-core, repository: oeros-ros-core}
-    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-ros-core, digest: "sha256:7ce83ba3f256e8adf295bbc9e643c9cb28079b81682d94181c0b69cacb8abe36"}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-ros-core, digest: "sha256:67f324612cf70ff0aed82ddc767a7741a89aa321286ff368425b4e1c0b0d22d1"}
   ros-base:
-    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-base, digest: "sha256:3224ee150cb02eb89a5e0811bc267b57ed3a91b9c10191df57810726a7e916d7"}
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-base, digest: "sha256:c69a7a39142b0a19c8cc5e80a35e9087e2ae46080dfa0a59961ff72287fdc5f6"}
     oeros: {image: oeros-container-ros-base, repository: oeros-ros-base}
-    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-ros-base, digest: "sha256:1b558d64f0bc967373557a5e6853e1f03f117962f9582a8c202a8c82adaad1ad"}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-ros-base, digest: "sha256:5b909ba944fb9bf2bf51f2ffad182798ff9b3d364f1b1f3f4cd4bf3e5dd60972"}
   perception:
-    osrf:  {repo: docker.io/library/ros, tag: lyrical-perception, digest: "sha256:913bb01eaf273358ac96343fa6d2ac5da3bd369b8fe8a48fb82b7022052cf5b2"}
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-perception, digest: "sha256:7bab838ac339427781d5f87c8118ac099cc40854863fc53aa1c7bbded680052d"}
     oeros: {image: oeros-container-perception, repository: oeros-perception, namespace: desktop/}
-    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-perception, digest: "sha256:062eee46acc2eece42371fbb559a03181813cc9d1b3bf2a7be88d619927cde6a"}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-perception, digest: "sha256:3a221948fbcb7e42833c322d0794f02caf748112f80f3cedd45618a6da8e6046"}
   simulation:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-simulation, digest: "sha256:e4a9a9a8f14dc509563f8d0786452e2982ac70f4132e5432e5986e6005e1b8ba"}
     osrf_arches: [amd64]  # no arm64 build; falls back to sloretz, see the note above
     oeros: {image: oeros-container-simulation, repository: oeros-simulation, namespace: desktop/}
-    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-simulation, digest: "sha256:e8159d50e8bc9fc82ba1190685447011f1a8b82e7fd84a11fdded884d024e595"}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-simulation, digest: "sha256:0f12e96db1c6ab1a4ff0a9fe424723a98688cb6b5500561dc9d4e7f451f92896"}
   desktop:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-desktop, digest: "sha256:cd0f24da968e3a7e8d0ef76b8d3684483235c86f5ab6a69ca2d4c9d7368a71f7"}
     osrf_arches: [amd64]  # no arm64 build; falls back to sloretz, see the note above
     oeros: {image: oeros-container-desktop, repository: oeros-desktop, namespace: desktop/}
-    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-desktop, digest: "sha256:e13691db28a77099c2480174efac8444d3af92ea941f1c243d4a73cf7ffba52f"}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-desktop, digest: "sha256:514dac88a082c10c5792250c47ecb8d97d4f7eacbd0531220da4b979a6d1990e"}
   desktop-full:
     osrf:  {repo: docker.io/osrf/ros, tag: lyrical-desktop-full, digest: "sha256:12f03ad224f4f7801c4eeb320934b198fe0b9536d70f2f617894da08ca3bedba"}
     osrf_arches: [amd64]  # no arm64 build; falls back to sloretz, see the note above
     oeros: {image: oeros-container-desktop-full, repository: oeros-desktop-full, namespace: desktop/}
-    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-desktop-full, digest: "sha256:670b60fd8358a81050f11b1a539457da56dc196674f42e4a0e1aa27dc9edda4a"}
+    sloretz: {repo: ghcr.io/sloretz/ros, tag: lyrical-desktop-full, digest: "sha256:5f1c85f8ae8f59fc95781e64f23ca79f3827f54de8f5b64462635053560ad7ba"}
 
 # Build-tools pairing (PS-005, PS-006): OSRF ros-base ships colcon and rosdep, oeros keeps
 # them in ros-dev. Accepted, intended difference. Used only by specs that list `dev` in their
 # front matter tiers.
 extra_tiers:
   dev:
-    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-base, digest: "sha256:3224ee150cb02eb89a5e0811bc267b57ed3a91b9c10191df57810726a7e916d7"}
+    osrf:  {repo: docker.io/library/ros, tag: lyrical-ros-base, digest: "sha256:c69a7a39142b0a19c8cc5e80a35e9087e2ae46080dfa0a59961ff72287fdc5f6"}
     oeros: {image: oeros-container-ros-dev, repository: oeros-ros-dev}
